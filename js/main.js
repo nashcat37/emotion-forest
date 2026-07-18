@@ -248,11 +248,12 @@ document.addEventListener('DOMContentLoaded', function () {
     return next;
   }
   function refreshDevExtra() {
-    devExtra.textContent = 'isFirstEver: ' + isFirstEver() + ' | diaryCount: ' + getDiaryCount();
+    if (devExtra) devExtra.textContent = 'isFirstEver: ' + isFirstEver() + ' | diaryCount: ' + getDiaryCount();
   }
   refreshDevExtra();
 
-  devResetBtn.addEventListener('click', function () {
+  if (devResetBtn) {
+    devResetBtn.addEventListener('click', function () {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(DIARY_COUNT_KEY);
     localStorage.removeItem('ef_gardenEntries'); // 一併清掉花園資料，避免殘留舊植株對不上重置後的天數
@@ -262,7 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
     localStorage.removeItem(LAST_PLAY_DATE_KEY); // 一併清掉今日已玩紀錄，方便重複測試
     localStorage.removeItem('ef_playerName'); // 一併清掉存起來的玩家名字
     location.reload();
-  });
+    });
+  }
 
   startBtn.addEventListener('click', function () {
     if (startBtn.disabled) return; // 時間限制或今天已玩過時，按鈕本身也是disabled，這裡多一層防呆

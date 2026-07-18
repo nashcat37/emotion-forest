@@ -14,22 +14,18 @@
     </div>
   </div>
 
+  <!-- 請橫放手機提示：純CSS media query控制顯示/隱藏，偵測「觸控裝置且無hover能力
+       (排除桌機用觸控螢幕但主要靠滑鼠的情況) + 目前是直向」，轉成橫向會自動消失，
+       不需要JS判斷，也不依賴容易誤判的瀏覽器UA字串 -->
+  <div id="rotatePrompt">
+    <div id="rotatePromptIcon">📱</div>
+    <div id="rotatePromptText">請將手機橫放<br>獲得最佳體驗</div>
+  </div>
+
   <!-- 啟動門檻：僅為取得瀏覽器允許影片有聲播放所需的使用者手勢，非世界觀的一部分 -->
   <div class="start-gate" id="startGate">
     <div class="start-gate__hint" id="startGateHint"></div>
     <button class="start-gate__btn" id="startBtn">進入森林</button>
-  </div>
-
-  <!-- 開發測試面板，正式上線前會整個移除 -->
-  <div class="dev-panel" id="devPanel">
-    <div>state: <span class="dev-panel__state" id="devState">-</span></div>
-    <div id="devExtra"></div>
-    <button id="devResetBtn">重置 isFirstEver</button>
-    <label class="dev-panel__checkbox">
-      <input type="checkbox" id="devBypassGate" /> 測試用：忽略時間限制
-    </label>
-    <button id="devSnowBtn">測試：下雪效果</button>
-    <button id="devPetalBtn">測試：花瓣雨效果</button>
   </div>
 
   <!-- 共用工具 -->
