@@ -1,142 +1,52 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emotion Forest - 歡迎回家</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://googleapis.com" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Emotion Forest 情緒森林</title>
+<link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-    <!-- 🎵 療癒音效庫 -->
-    <audio id="bgmAudio" loop><source src="bgm.mp3" type="audio/mp3"></audio>
-    <audio id="magicSfx"><source src="https://google.com" type="audio/ogg"></audio>
-    <audio id="clickSfx"><source src="https://google.com" type="audio/ogg"></audio>
-
-    <!-- 🌲 濃霧邊界層 (第一眼看到的黑幕與濃霧) -->
-    <div id="ritualLayer" class="ritual-overlay">
-        <div class="ritual-content">
-            <p id="ritualText" class="subtitles">你正一步步穿過厚重的濃霧...<br>外面的世界逐漸安靜了下來。</p>
-            <span id="clickPrompt" class="click-hint">▼ 點擊畫面任意處前進</span>
-        </div>
+  <div id="stage">
+    <div id="app">
+      <!-- 所有 Scene 由 SceneManager 動態插入這裡 -->
     </div>
+  </div>
 
-    <!-- 🏡 核心環境容器 (預設被大霧鎖定，過場後解鎖) -->
-    <div id="gameMainZone" class="game-container hidden-forest">
-        <div class="ambient-glow"></div>
-        <div id="starfield" class="starfield-layer"></div>
+  <!-- 啟動門檻：僅為取得瀏覽器允許影片有聲播放所需的使用者手勢，非世界觀的一部分 -->
+  <div class="start-gate" id="startGate">
+    <div class="start-gate__hint" id="startGateHint"></div>
+    <button class="start-gate__btn" id="startBtn">進入森林</button>
+  </div>
 
-        <!-- 🎯 四大溫度互動熱區 (與你的美圖坐標完全對齊) -->
-        <div id="hotspot-lamp" class="touch-hotspot" title="點擊守夜燈"></div>
-        <div id="hotspot-pot" class="touch-hotspot" title="點擊茶壺"><div class="steam-effect"></div></div>
-        <div id="hotspot-lake" class="touch-hotspot" title="點擊湖面"><div class="ripple-effect"></div></div>
-        <div id="hotspot-cat" class="touch-hotspot" title="輕輕撫摸蜜柑"></div>
-        
-        <!-- 左側：口袋魔法日記本 -->
-        <div id="diaryBox" class="diary-section hidden">
-            <div class="diary-book">
-                <div class="diary-header">
-                    <h2>魔法日記</h2>
-                    <span id="diaryTitleDay" class="date-display">深夜的湖畔</span>
-                </div>
-                <textarea id="diaryInput" class="diary-input" placeholder="把今天帶來的重量，都揉進文字裡吧..."></textarea>
-                <div class="diary-footer">
-                    <button id="submitBtn" class="submit-btn">化作森林的微光</button>
-                        <!-- 👑 加上版權聲明小字 -->
-                    <p class="copyright-text">© 2026 nashcat. All rights reserved.《Emotion Forest》<br>美術與劇本受著作權保護</p>
-                </div>
-            </div>
-        </div>
+  <!-- 開發測試面板，正式上線前會整個移除 -->
+  <div class="dev-panel" id="devPanel">
+    <div>state: <span class="dev-panel__state" id="devState">-</span></div>
+    <div id="devExtra"></div>
+    <button id="devResetBtn">重置 isFirstEver</button>
+    <label class="dev-panel__checkbox">
+      <input type="checkbox" id="devBypassGate" /> 測試用：忽略時間限制
+    </label>
+    <button id="devSnowBtn">測試：下雪效果</button>
+    <button id="devPetalBtn">測試：花瓣雨效果</button>
+  </div>
 
-        <!-- 右側：胖貓蜜柑的懸浮對話便籤 -->
-        <div id="catBox" class="companion-section hidden">
-            <div class="dialogue-box">
-                <p class="cat-name">蜜柑</p>
-                <p id="catTalk" class="cat-text">...</p>
-                <!-- 👑 按鈕群：在同一個對話框中切換前進與探索/離開 -->
-                <div class="btn-group" style="text-align: right; margin-top: 15px;">
-                    <button id="catNextBtn" class="cat-next-btn hidden">靜靜聆聽 ▼</button>
-                    <button id="exploreBtn" class="explore-btn hidden" style="margin-right: 15px;">再多停留一下</button>
-                    <button id="leaveBtn" class="leave-btn hidden">走入濃霧離開</button>
-                </div>
-            </div>
-        </div>
+  <!-- 共用工具 -->
+  <script src="js/utils/typewriter.js"></script>
 
-        <!-- 🌸 下方花園：對齊原圖 7 種植物的名牌發光熱區 -->
-        <div class="plants-zone">
-            <div id="plant-sad" class="plant-glow-effect touch-hotspot" title="安心草"></div>
-            <div id="plant-angry" class="plant-glow-effect touch-hotspot" title="勇氣花"></div>
-            <div id="plant-hope" class="plant-glow-effect touch-hotspot" title="希望芽"></div>
-            <div id="plant-tender" class="plant-glow-effect touch-hotspot" title="溫柔藕"></div>
-            <div id="plant-miss" class="plant-glow-effect touch-hotspot" title="思念藤"></div>
-            <div id="plant-release" class="plant-glow-effect touch-hotspot" title="釋放花"></div>
-            <div id="plant-happy" class="plant-glow-effect touch-hotspot" title="快樂葉"></div>
-        </div>
-    </div>
+  <!-- Manager 模組 -->
+  <script src="js/managers/memoryManager.js"></script>
+  <script src="js/managers/gardenManager.js"></script>
+  <script src="js/managers/diaryManager.js"></script>
 
-    <!-- 🛡️ 內建無敵防禦大腦：保證點擊絕對有效、絕不卡在第一頁！ -->
-    <script>
-        const fallbackSteps = [
-            "遠方，一盞溫暖的守夜燈在迷霧中搖曳...<br>你順著光芒，找到了熟悉的湖畔木屋。",
-            "推開門，空氣很安靜。<br>坐在搖椅上的胖貓蜜柑揉了揉眼睛，轉頭看見了你。",
-            "「喵...你回來了。今天，外面的世界也很不容易吧？」<br>蜜柑向你打了個招呼。",
-            "你走到木屋旁的空搖椅坐下。<br>桌上的魔法日記本在守夜燈下散發著極淡的光暈，等待著你。"
-        ];
-        let fallbackIndex = 0;
+  <!-- Scene 模組 -->
+  <script src="js/scenes/fogScene.js"></script>
+  <script src="js/scenes/mainHubScene.js"></script>
+  <script src="js/scenes/seedPlantingScene.js"></script>
 
-        // 監聽最上層的濃霧點擊
-        document.getElementById('ritualLayer').addEventListener('click', function() {
-            const txt = document.getElementById('ritualText');
-            const main = document.getElementById('gameMainZone');
-            const bgm = document.getElementById('bgmAudio');
-
-            // 嘗試播音樂
-            if(bgm) { bgm.play().catch(e => console.log("音樂播放等待授權")); }
-
-            if (fallbackIndex < fallbackSteps.length) {
-                if(txt) {
-                    txt.style.opacity = 0;
-                    setTimeout(function() {
-                        txt.innerHTML = fallbackSteps[fallbackIndex];
-                        txt.style.opacity = 1;
-                        
-                        // 隨著點擊，強制一步步解封畫面元件
-                        if (fallbackIndex === 1 && main) { main.classList.remove('hidden-forest'); }
-                        if (fallbackIndex === 2) { document.getElementById('catBox').classList.remove('hidden'); document.getElementById('catTalk').innerText = "「喵...你回來了。今天，外面的世界也很不容易吧？」"; }
-                        if (fallbackIndex === 3) { document.getElementById('diaryBox').classList.remove('hidden'); document.getElementById('catTalk').innerText = "「沒關係的，不管是什麼樣的心情，都可以放在這裡。我會陪著你。」"; }
-                        
-                        fallbackIndex++;
-                    }, 250);
-                }
-            } else {
-                // 字幕走完，大霧淡出
-                this.classList.add('fade-out');
-                setTimeout(() => { this.style.display = 'none'; }, 1200);
-            }
-        });
-    </script>
-
-    <!-- 🧠 外部 script.js (負責雙擊星光、打字機與探索按鈕的進階大腦) -->
-    <script src="script.js"></script>
-
-    <!-- 👑 鎖死滑鼠右鍵、禁止複製、封鎖 F12 檢查功能 -->
-    <script>
-        // 1. 禁用滑鼠右鍵選單
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-
-        // 2. 封鎖鍵盤鍵組合（防止按下 Ctrl+Shift+I 或 F12 偷看原始碼）
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-                (e.ctrlKey && e.key === 'U')) {
-                e.preventDefault();
-            }
-        });
-    </script>
-
+  <!-- Runtime Core -->
+  <script src="js/sceneManager.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
