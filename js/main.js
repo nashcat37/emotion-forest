@@ -71,8 +71,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const hour = new Date().getHours();
     return hour >= PLAY_WINDOW_START_HOUR && hour < PLAY_WINDOW_END_HOUR;
   }
+  // 正式版強制鎖死：不管 localStorage 裡殘留什麼值（例如同一瀏覽器/網址下
+  // 之前測試過開發版，勾選過「忽略時間限制」留下的殘留記錄），正式版
+  // 一律當作沒有開啟，確保時間限制、每日限玩、防拷貝都正常生效。
+  // 正式版已經沒有勾選框可以手動關閉這個標記，所以不能依賴 localStorage 判斷。
   function isDevBypassOn() {
-    return localStorage.getItem(DEV_BYPASS_GATE_KEY) === 'true';
+    return false;
   }
 
   // 依序檢查：測試開關 → 時間 → 今天是否玩過，更新按鈕可否點擊跟上方提示文字
