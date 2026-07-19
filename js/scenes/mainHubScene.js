@@ -638,12 +638,15 @@ window.EF.scenes.mainhub = (function () {
 
     function playTouchDiaryThenOpenRecall() {
       touchDiaryOverlay.classList.add('is-open');
-      // 用 load() 重置回片頭比直接設 currentTime=0 安全：影片 metadata
-      // 還沒載入完成時設定 currentTime 會直接丟例外，導致後面的 play() 
-      // 整個沒被執行到，畫面卡在全黑的影片框（這是這次修正的bug）
-      touchDiaryVideo.load();
+      // 這支影片每次mount只會被觸發播放一次（touchDiaryPlayedToday旗標保證），
+      // 永遠是全新、還沒播放過的狀態，本來就是從片頭開始，不需要額外呼叫
+      // load() 重置。刻意拿掉這個動作，是因為它會讓 play() 呼叫的時機點
+      // 離玩家點擊「回憶心情」的當下更遠——這支影片跟seed planting一樣
+      // 帶音軌，在iOS Safari嚴格的自動播放政策下，只要不是緊貼著使用者
+      // 手勢同步呼叫，就容易被判定成不合規而擋下播放。拿掉load()讓
+      // play() 更貼近點擊當下，降低被擋的機率
       touchDiaryVideo.play().catch(function (err) {
-        console.warn('[MainHub] touch diary 動畫播放失敗，略過動畫直接進入回憶介面：', err);
+        console.warn('[MainHub] touch diary 動畫播放失敗（可能是iOS嚴格自動播放政策擋下），略過動畫直接進入回憶介面：', err);
         finishTouchDiary();
       });
     }
