@@ -75,7 +75,7 @@ textarea, input {
   }
 }
 #rotatePromptIcon {
-  font-size: 3rem;
+  font-size: clamp(2.2rem, 6vmin, 3.6rem);
   margin-bottom: 16px;
   /* 手機圖示旋轉90度示意「請轉向」，柔和地緩慢來回擺動，不用生硬的靜止圖示 */
   animation: rotatePromptSway 2.4s ease-in-out infinite;
@@ -85,7 +85,7 @@ textarea, input {
   50% { transform: rotate(90deg); }
 }
 #rotatePromptText {
-  font-size: 1.1rem;
+  font-size: clamp(0.85rem, 2.2vmin, 1.3rem);
   line-height: 1.8;
   letter-spacing: 0.08em;
 }
@@ -126,7 +126,7 @@ textarea, input {
   border: 1px solid rgba(255, 220, 150, 0.5);
   color: rgba(255, 245, 225, 0.95);
   border-radius: 999px;
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 2vmin, 1.2rem);
   letter-spacing: 0.1em;
   cursor: pointer;
 }
@@ -144,7 +144,7 @@ textarea, input {
   border: 1px solid rgba(255, 245, 225, 0.25);
   color: rgba(255, 245, 225, 0.55);
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: clamp(0.65rem, 1.6vmin, 0.95rem);
   letter-spacing: 0.06em;
   cursor: pointer;
 }
@@ -158,7 +158,7 @@ textarea, input {
   left: 50%;
   transform: translateX(-50%);
   color: rgba(255, 245, 225, 0.75);
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
   letter-spacing: 0.06em;
   text-align: center;
   white-space: nowrap;
@@ -278,7 +278,7 @@ textarea, input {
   left: 50%;
   transform: translateX(-50%);
   color: rgba(255, 245, 225, 0.85);
-  font-size: 1.65rem; /* 原 1.1rem，放大 1.5 倍 */
+  font-size: clamp(1.3rem, 3.3vmin, 1.9rem); /* 原 1.1rem，放大 1.5 倍，現改為隨畫布縮放 */
   letter-spacing: 0.15em;
   text-shadow: 0 0 12px rgba(0,0,0,0.8);
   opacity: 0;
@@ -342,7 +342,7 @@ textarea, input {
   flex-direction: column;
   background: #1a1a2e;
   color: rgba(255, 230, 180, 0.9);
-  font-size: 1.2rem;
+  font-size: clamp(0.95rem, 2.4vmin, 1.4rem);
   text-align: center;
   padding: 0 24px;
 }
@@ -411,7 +411,7 @@ textarea, input {
   align-items: center;
   width: fit-content;
   color: rgba(255, 245, 225, 0.9);
-  font-size: 1.575rem; /* 原 1.05rem，放大 1.5 倍 */
+  font-size: clamp(1.25rem, 3.15vmin, 1.8rem); /* 原 1.05rem，放大 1.5 倍，現改為隨畫布縮放 */
   letter-spacing: 0.12em;
   line-height: 1.8;
   text-shadow: 0 0 12px rgba(0,0,0,0.85);
@@ -429,7 +429,7 @@ textarea, input {
 .mainhub-scene__dialogue-next {
   display: block;
   margin-top: 6px;
-  font-size: 1.275rem; /* 原 0.85rem，放大 1.5 倍 */
+  font-size: clamp(1.0rem, 2.55vmin, 1.5rem); /* 原 0.85rem，放大 1.5 倍，現改為隨畫布縮放 */
   opacity: 0;
   transition: opacity 0.8s ease;
   animation: dialogueNextBounce 1.6s ease-in-out infinite;
@@ -461,7 +461,7 @@ textarea, input {
 .mainhub-scene__farewell-choice-btn {
   padding: 8px 22px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
   letter-spacing: 0.1em;
   cursor: pointer;
   border: 1px solid rgba(255, 220, 150, 0.4);
@@ -850,7 +850,7 @@ textarea, input {
   background: linear-gradient(160deg, #3a2e22, #241a12);
   border: 1px solid rgba(255, 220, 150, 0.25);
   border-radius: 10px;
-  padding: 24px;
+  padding: clamp(14px, 3vmin, 24px);
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
@@ -861,7 +861,7 @@ textarea, input {
   border: 1px solid rgba(255, 245, 225, 0.2);
   border-radius: 6px;
   color: rgba(255, 245, 225, 0.9);
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 2vmin, 1.2rem);
   font-family: inherit;
   padding: 12px;
   resize: none;
@@ -885,7 +885,7 @@ textarea, input {
 .diary-overlay__actions button {
   padding: 8px 20px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
   letter-spacing: 0.08em;
   cursor: pointer;
   border: 1px solid rgba(255, 245, 225, 0.3);
@@ -907,7 +907,7 @@ textarea, input {
 .diary-overlay__blank-confirm-text {
   margin: 0 0 10px;
   color: rgba(255, 245, 225, 0.85);
-  font-size: 0.95rem;
+  font-size: clamp(0.75rem, 1.9vmin, 1.1rem);
   letter-spacing: 0.06em;
 }
 .diary-overlay__blank-confirm-actions {
@@ -918,7 +918,7 @@ textarea, input {
 .diary-overlay__blank-confirm-actions button {
   padding: 8px 20px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
   letter-spacing: 0.08em;
   cursor: pointer;
   border: 1px solid rgba(255, 245, 225, 0.3);
@@ -933,7 +933,7 @@ textarea, input {
   position: absolute;
   right: 12px;
   bottom: 8px;
-  font-size: 0.6rem;
+  font-size: clamp(0.45rem, 1.2vmin, 0.7rem);
   color: rgba(255, 255, 255, 0.12);
   letter-spacing: 0.02em;
   pointer-events: none;
@@ -1021,13 +1021,13 @@ textarea, input {
 }
 .memory-recall-overlay__plant-name-zh {
   color: #8e6bb0; /* 薰衣草紫 */
-  font-size: 1.25rem; /* 20px */
+  font-size: clamp(1.0rem, 2.5vmin, 1.45rem); /* 20px */
   font-weight: bold;
   letter-spacing: 0.08em;
 }
 .memory-recall-overlay__plant-name-en {
   color: #8e6bb0;
-  font-size: 1rem; /* 16px */
+  font-size: clamp(0.8rem, 2vmin, 1.2rem); /* 16px */
   letter-spacing: 0.1em;
   opacity: 0.85;
   margin-top: 2px;
@@ -1041,7 +1041,7 @@ textarea, input {
   flex: none;
   text-align: center;
   color: #8e6bb0;
-  font-size: 1rem; /* 16px */
+  font-size: clamp(0.8rem, 2vmin, 1.2rem); /* 16px */
   letter-spacing: 0.06em;
   margin-top: 4%;
 }
@@ -1072,7 +1072,7 @@ textarea, input {
 }
 .memory-recall-overlay__half-header {
   color: #6b4f22;
-  font-size: 0.85rem;
+  font-size: clamp(0.65rem, 1.7vmin, 1.0rem);
   font-weight: bold;
   letter-spacing: 0.06em;
   margin-bottom: 3%;
@@ -1081,7 +1081,7 @@ textarea, input {
 .memory-recall-overlay__diary-text,
 .memory-recall-overlay__memory-text {
   color: #4a3820;
-  font-size: 0.95rem;
+  font-size: clamp(0.75rem, 1.9vmin, 1.1rem);
   line-height: 1.8;
   letter-spacing: 0.05em;
   white-space: pre-wrap;
@@ -1106,7 +1106,7 @@ textarea, input {
 .memory-recall-overlay__controls button {
   padding: 8px 18px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
   letter-spacing: 0.08em;
   cursor: pointer;
   border: 1px solid rgba(255, 245, 225, 0.3);
