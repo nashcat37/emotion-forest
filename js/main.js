@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const startGate = document.getElementById('startGate');
   const startGateHint = document.getElementById('startGateHint');
   const startBtn = document.getElementById('startBtn');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
   const devResetBtn = document.getElementById('devResetBtn');
   const devExtra = document.getElementById('devExtra');
   const devBypassCheckbox = document.getElementById('devBypassGate');
@@ -109,6 +110,46 @@ document.addEventListener('DOMContentLoaded', function () {
       localStorage.setItem(DEV_BYPASS_GATE_KEY, devBypassCheckbox.checked ? 'true' : 'false');
       refreshStartGate();
     });
+  }
+
+  // ---------------- 全螢幕功能 ----------------
+  // 只在「觸控裝置」且「瀏覽器支援 Fullscreen API」時才顯示按鈕。
+  // iOS Safari 引擎（含iPhone上的Chrome）不支援此API，document.documentElement
+  // 上不會有 requestFullscreen 系列方法，偵測不到就直接不顯示按鈕，
+  // 不會出現點了沒反應的死按鈕。桌機也不顯示，全螢幕功能只為手機準備。
+  function getFullscreenRequestFn(el) {
+    return el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || null;
+  }
+  function getExitFullscreenFn() {
+    return document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen || null;
+  }
+  function isCurrentlyFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+  if (fullscreenBtn) {
+    const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    const requestFn = getFullscreenRequestFn(document.documentElement);
+    if (isTouchDevice && requestFn) {
+      fullscreenBtn.style.display = '';
+      fullscreenBtn.addEventListener('click', function () {
+        try {
+          if (isCurrentlyFullscreen()) {
+            const exitFn = getExitFullscreenFn();
+            if (exitFn) exitFn.call(document);
+          } else {
+            requestFn.call(document.documentElement);
+          }
+        } catch (err) {
+          console.warn('[main] 全螢幕切換失敗：', err);
+        }
+      });
+      const updateFullscreenBtnLabel = function () {
+        fullscreenBtn.textContent = isCurrentlyFullscreen() ? '⛶ 離開全螢幕' : '⛶ 全螢幕';
+      };
+      document.addEventListener('fullscreenchange', updateFullscreenBtnLabel);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenBtnLabel);
+      document.addEventListener('msfullscreenchange', updateFullscreenBtnLabel);
+    }
   }
 
   // 下雪效果測試按鈕：觸發時機還沒定案前，先手動預覽。只有目前在
