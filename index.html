@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Emotion Forest 情緒森林</title>
 <link rel="stylesheet" href="css/style.css" />
+
+<!-- 加到主畫面／全螢幕體驗相關設定 -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#050810" />
+<!-- iOS Safari 引擎不支援 web app manifest，需要另外用這組舊式 meta 標籤
+     才能讓「加入主畫面」後以全螢幕模式啟動、隱藏Safari網址列 -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="情緒森林" />
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
 </head>
 <body>
 
@@ -26,6 +36,11 @@
   <div class="start-gate" id="startGate">
     <div class="start-gate__hint" id="startGateHint"></div>
     <button class="start-gate__btn" id="startBtn">進入森林</button>
+    <!-- 全螢幕切換按鈕：預設隱藏，只在JS偵測到「觸控裝置」且「瀏覽器支援
+         Fullscreen API」時才顯示（iOS Safari引擎不支援此API，會自動隱藏，
+         不會出現點了沒反應的按鈕）。只放在啟動門檻，進入森林後不再出現，
+         避免干擾Ritual的沉浸感 -->
+    <button class="start-gate__fullscreen-btn" id="fullscreenBtn" style="display:none;">⛶ 全螢幕</button>
   </div>
 
   <!-- 共用工具 -->
