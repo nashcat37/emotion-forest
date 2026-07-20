@@ -50,8 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const startGateHint = document.getElementById('startGateHint');
   const startBtn = document.getElementById('startBtn');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
-  const endGate = document.getElementById('endGate');
-  const endBtn = document.getElementById('endBtn');
   const devResetBtn = document.getElementById('devResetBtn');
   const devExtra = document.getElementById('devExtra');
   const devBypassCheckbox = document.getElementById('devBypassGate');
@@ -74,8 +72,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const hour = new Date().getHours();
     return hour >= PLAY_WINDOW_START_HOUR && hour < PLAY_WINDOW_END_HOUR;
   }
+  // 正式版強制鎖死：不管 localStorage 裡殘留什麼值（例如同一瀏覽器/網址下
+  // 之前測試過開發版，勾選過「忽略時間限制」留下的殘留記錄），正式版
+  // 一律當作沒有開啟，確保時間限制、每日限玩、防拷貝都正常生效。
+  // 正式版已經沒有勾選框可以手動關閉這個標記，所以不能依賴 localStorage 判斷。
   function isDevBypassOn() {
-    return localStorage.getItem(DEV_BYPASS_GATE_KEY) === 'true';
+    return false;
   }
 
   // 依序檢查：測試開關 → 時間 → 今天是否玩過，更新按鈕可否點擊跟上方提示文字
@@ -315,18 +317,6 @@ document.addEventListener('DOMContentLoaded', function () {
     beginExperience();
   });
 
-  endBtn.addEventListener('click', function () {
-    // 網頁基於瀏覽器安全限制，沒辦法強制關閉玩家的分頁（除非是網站自己
-    // 用window.open()開的分頁），所以這裡做的是「明確的結束狀態」：
-    // 按鈕跟提示文字淡出，同時若玩家先前有開啟全螢幕，一併嘗試離開，
-    // 讓畫面回到瀏覽器一般模式，方便玩家自行關閉分頁
-    const exitFn = getExitFullscreenFn();
-    if (exitFn && isCurrentlyFullscreen()) {
-      try { exitFn.call(document); } catch (err) { /* 忽略離開全螢幕失敗，不影響結尾流程 */ }
-    }
-    endGate.classList.add('is-closed');
-  });
-
   function beginExperience() {
     goToFog('enter');
   }
@@ -343,9 +333,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // 「一天只能玩一次」在這裡才算數，而不是一進入森林就算——
         // 避免玩家中途不小心關掉視窗，卻被誤判成「今天玩過了」。
         markPlayedToday();
-        // 濃霧背景維持在畫面上不切走，讓結尾畫面淡入蓋在最上層，
-        // 明確告訴玩家今天的 Ritual 已經結束，不會停在一片濃霧不知所措
-        endGate.classList.add('is-visible');
+        // 之後這裡會是「回到現實」的收尾畫面，目前先印出 log 供測試確認。
+        console.log('[main] Ritual Loop 完整跑完一次（Fog exit 完成）');
       }
     });
   }
