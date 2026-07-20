@@ -165,6 +165,55 @@ textarea, input {
   min-height: 1.4em;
 }
 
+/* 結尾道別畫面：Fog exit 播完後淡入，蓋在最上層。跟 start-gate 不同，
+   背景刻意用半透明深色（不是純黑），讓底下的濃霧場景還隱約看得見，
+   維持氛圍連貫，而不是像遊戲開始前那樣硬切黑幕 */
+.end-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  background: rgba(3, 5, 12, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2s ease;
+}
+.end-gate.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* 按下「離開森林」後：文字跟按鈕本身淡出消失，只留下深色遮罩安靜停在
+   畫面上，作為明確的結束狀態，不會再有任何互動 */
+.end-gate.is-closed .end-gate__text,
+.end-gate.is-closed .end-gate__btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+.end-gate__text {
+  color: rgba(255, 245, 225, 0.9);
+  font-size: clamp(0.95rem, 2.4vmin, 1.4rem);
+  line-height: 1.9;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(0,0,0,0.8);
+}
+.end-gate__btn {
+  padding: 12px 32px;
+  background: rgba(255, 220, 150, 0.15);
+  border: 1px solid rgba(255, 220, 150, 0.5);
+  color: rgba(255, 245, 225, 0.95);
+  border-radius: 999px;
+  font-size: clamp(0.8rem, 2vmin, 1.2rem);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.end-gate__btn:hover { background: rgba(255, 220, 150, 0.28); }
+
 /* ============================================================
    開發測試面板（正式上線前整個移除，不屬於任何 Scene 的正式規格）
    ============================================================ */
