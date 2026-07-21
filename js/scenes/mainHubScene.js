@@ -44,6 +44,16 @@ window.EF.scenes.mainhub = (function () {
       '今天，外面的世界也很不容易吧？'
     ],
     diaryPlaceholder: '今天過得如何？',
+    diaryIntroFirstTime: [
+      '我的主人曾跟我說，把每天發生的事情、心情寫下來，就像我在梳理我的毛',
+      '它可以撫平我心中的毛躁、不安',
+      '什麼都不寫也沒關係，我只要記得....',
+      '每段情緒、心情，都有它存在的意義',
+      '它們都是一種陪伴唷，喵~'
+    ],
+    diaryIntroReturning: [
+      '有你及你的文字的陪伴真好，抱著日記的我，昨晚睡得更香甜了，喵~'
+    ],
     diarySubmitAck: '謝謝你告訴我。',
     diarySubmitAckNamed: '很開心認識你 {name}～ 喵～',
     diarySubmitAckNamedGeneric: '很開心認識你～ 喵～',
@@ -94,6 +104,9 @@ window.EF.scenes.mainhub = (function () {
     const PLAYER_NAME_KEY = 'ef_playerName';
     // 每天(每次mount)只播一次mikan touch diary過場動畫，同一天內重複點擊「回憶心情」不會再重播
     let touchDiaryPlayedToday = false;
+    // 每天(每次mount)第一次點擊日記本熱區時，蜜柑先說一段開場白才打開日記面板，
+    // 同一天內重複點擊（例如按「先不寫」取消後又點一次）直接開面板，不會重播
+    let diaryIntroPlayedToday = false;
 
     container.classList.add('mainhub-scene');
     container.innerHTML =
@@ -638,12 +651,15 @@ window.EF.scenes.mainhub = (function () {
 
     function playTouchDiaryThenOpenRecall() {
       touchDiaryOverlay.classList.add('is-open');
-      // 用 load() 重置回片頭比直接設 currentTime=0 安全：影片 metadata
-      // 還沒載入完成時設定 currentTime 會直接丟例外，導致後面的 play() 
-      // 整個沒被執行到，畫面卡在全黑的影片框（這是這次修正的bug）
-      touchDiaryVideo.load();
+      // 這支影片每次mount只會被觸發播放一次（touchDiaryPlayedToday旗標保證），
+      // 永遠是全新、還沒播放過的狀態，本來就是從片頭開始，不需要額外呼叫
+      // load() 重置。刻意拿掉這個動作，是因為它會讓 play() 呼叫的時機點
+      // 離玩家點擊「回憶心情」的當下更遠——這支影片跟seed planting一樣
+      // 帶音軌，在iOS Safari嚴格的自動播放政策下，只要不是緊貼著使用者
+      // 手勢同步呼叫，就容易被判定成不合規而擋下播放。拿掉load()讓
+      // play() 更貼近點擊當下，降低被擋的機率
       touchDiaryVideo.play().catch(function (err) {
-        console.warn('[MainHub] touch diary 動畫播放失敗，略過動畫直接進入回憶介面：', err);
+        console.warn('[MainHub] touch diary 動畫播放失敗（可能是iOS嚴格自動播放政策擋下），略過動畫直接進入回憶介面：', err);
         finishTouchDiary();
       });
     }
@@ -769,14 +785,65 @@ window.EF.scenes.mainhub = (function () {
       }, 5800);
       cleanupFns.push(function () { clearTimeout(t1); });
 
-      function onDiaryHotspotClick() {
-        if (!diaryHotspot.classList.contains('is-available')) return;
+      function openDiaryPanelForReal() {
         diaryOverlay.classList.add('is-open');
         blankConfirm.classList.remove('is-visible');
         diaryActions.style.display = '';
         diaryInput.disabled = false;
         diaryInput.placeholder = COPY.diaryPlaceholder;
         diaryInput.focus();
+      }
+
+      function playDiaryIntro() {
+        const lines = params.hasHistory ? COPY.diaryIntroReturning : COPY.diaryIntroFirstTime;
+        // Day2+ 那句提到「抱著日記的我」，蜜柑講這句話時順勢切換成抱日記姿勢，
+        // 呼應文字內容；Day1 開場白沒有提到這個動作，維持原本idle姿勢
+        if (params.hasHistory) {
+          setMikan('hold_diary');
+        }
+
+        function onIntroClick() {
+          if (isTyping) return;
+          if (introIndex < lines.length - 1) {
+            introIndex++;
+            playIntroLine(introIndex);
+          }
+        }
+        let introIndex = 0;
+
+        function playIntroLine(i) {
+          const isLast = i === lines.length - 1;
+          if (isLast) {
+            dialogueEl.removeEventListener('click', onIntroClick);
+          }
+          showDialogue(lines[i], function () {
+            if (isLast) {
+              const tDone = setTimeout(function () {
+                hideDialogue();
+                setMikan('listening'); // 開場白說完，準備聽玩家寫的內容
+                diaryHotspot.classList.add('is-available'); // 恢復可點擊，避免之後取消日記(先不寫)後點不開日記本
+                openDiaryPanelForReal();
+              }, 1400);
+              cleanupFns.push(function () { clearTimeout(tDone); });
+            } else {
+              dialogueNextEl.classList.add('is-visible');
+            }
+          });
+        }
+        dialogueEl.addEventListener('click', onIntroClick);
+        cleanupFns.push(function () { dialogueEl.removeEventListener('click', onIntroClick); });
+        playIntroLine(0);
+      }
+
+      function onDiaryHotspotClick() {
+        if (!diaryHotspot.classList.contains('is-available')) return;
+        if (!diaryIntroPlayedToday) {
+          diaryIntroPlayedToday = true;
+          diaryHotspot.classList.remove('is-available'); // 開場白播放期間先不給點，播完openDiaryPanelForReal會直接開面板，不依賴這個class
+          playDiaryIntro();
+        } else {
+          openDiaryPanelForReal();
+        }
       }
       diaryHotspot.addEventListener('click', onDiaryHotspotClick);
       cleanupFns.push(function () { diaryHotspot.removeEventListener('click', onDiaryHotspotClick); });

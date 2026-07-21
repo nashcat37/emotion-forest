@@ -47,6 +47,7 @@ window.EF.scenes.fog = (function () {
 
     const video = document.createElement('video');
     video.src = 'assets/videos/cine_first_entry.mp4';
+    video.setAttribute('playsinline', '');
     video.playsInline = true;
     layer.appendChild(video);
     container.appendChild(layer);
@@ -61,8 +62,10 @@ window.EF.scenes.fog = (function () {
     });
 
     video.play().catch(function (err) {
-      // 若瀏覽器政策阻擋播放（例如尚未取得使用者互動），記錄但不讓流程卡死。
-      console.warn('[FogScene] Cinematic 播放失敗，可能需要使用者互動手勢：', err);
+      // 若瀏覽器政策阻擋播放，播放失敗時視同播放完畢直接繼續，避免玩家
+      // 卡在第一次進場畫面出不來（原則同 seedPlantingScene）
+      console.warn('[FogScene] Cinematic 播放失敗，視同播放完畢直接繼續：', err);
+      handleEnded();
     });
   }
 

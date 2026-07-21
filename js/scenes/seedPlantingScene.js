@@ -36,17 +36,13 @@ window.EF.scenes.seedPlanting = (function () {
     const video = document.createElement('video');
     video.className = 'seed-planting__video';
     video.src = 'assets/videos/cine_seed_planting.mp4';
+    // iOS Safari 對 playsinline 這個屬性，用 setAttribute 直接設在 HTML
+    // 屬性上，會比只設定 JS 的 .playsInline 屬性更可靠
+    video.setAttribute('playsinline', '');
     video.playsInline = true;
     layer.appendChild(video);
 
     container.appendChild(layer);
-
-    const playTimer = setTimeout(function () {
-      video.play().catch(function (err) {
-        console.warn('[SeedPlantingScene] 播放失敗，可能需要使用者互動手勢：', err);
-      });
-    }, PRE_PLAY_HOLD_MS);
-    cleanupFns.push(function () { clearTimeout(playTimer); });
 
     function handleEnded() {
       const holdTimer = setTimeout(function () {
@@ -63,6 +59,21 @@ window.EF.scenes.seedPlanting = (function () {
       video.removeEventListener('ended', handleEnded);
       video.pause();
     });
+
+    const playTimer = setTimeout(function () {
+      video.play().catch(function (err) {
+        // 這支影片帶音軌、又是延遲一小段時間才呼叫play()，iOS Safari的
+        // 嚴格自動播放政策很容易擋下這個請求（Android Chrome限制較寬鬆，
+        // 通常不會被擋）。整個Ritual流程原本完全依賴影片的ended事件才會
+        // 繼續，播放一旦被擋，ended永遠不會觸發，玩家就會卡在這個畫面
+        // 出不來——這違反「玩家永遠感到安全」的原則，所以播放失敗時
+        // 視同播放完畢，直接讓Ritual繼續往下走，玩家只是少看到這段動畫，
+        // 而不是被卡住
+        console.warn('[SeedPlantingScene] 播放失敗（可能是iOS嚴格自動播放政策擋下），視同播放完畢直接繼續：', err);
+        handleEnded();
+      });
+    }, PRE_PLAY_HOLD_MS);
+    cleanupFns.push(function () { clearTimeout(playTimer); });
 
     // 已知缺口：淡出後露出的靜態背景尚未有種子/幼苗圖層（等 GardenManager 完成），
     // 花圃裡的光球淡出後就是空的土壤。這支影片已經讓「消失」的過程變得緩慢、

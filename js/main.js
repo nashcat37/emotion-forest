@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const startGate = document.getElementById('startGate');
   const startGateHint = document.getElementById('startGateHint');
   const startBtn = document.getElementById('startBtn');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const endGate = document.getElementById('endGate');
+  const endBtn = document.getElementById('endBtn');
   const devResetBtn = document.getElementById('devResetBtn');
   const devExtra = document.getElementById('devExtra');
   const devBypassCheckbox = document.getElementById('devBypassGate');
@@ -109,6 +112,46 @@ document.addEventListener('DOMContentLoaded', function () {
       localStorage.setItem(DEV_BYPASS_GATE_KEY, devBypassCheckbox.checked ? 'true' : 'false');
       refreshStartGate();
     });
+  }
+
+  // ---------------- 全螢幕功能 ----------------
+  // 只在「觸控裝置」且「瀏覽器支援 Fullscreen API」時才顯示按鈕。
+  // iOS Safari 引擎（含iPhone上的Chrome）不支援此API，document.documentElement
+  // 上不會有 requestFullscreen 系列方法，偵測不到就直接不顯示按鈕，
+  // 不會出現點了沒反應的死按鈕。桌機也不顯示，全螢幕功能只為手機準備。
+  function getFullscreenRequestFn(el) {
+    return el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || null;
+  }
+  function getExitFullscreenFn() {
+    return document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen || null;
+  }
+  function isCurrentlyFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+  if (fullscreenBtn) {
+    const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    const requestFn = getFullscreenRequestFn(document.documentElement);
+    if (isTouchDevice && requestFn) {
+      fullscreenBtn.style.display = '';
+      fullscreenBtn.addEventListener('click', function () {
+        try {
+          if (isCurrentlyFullscreen()) {
+            const exitFn = getExitFullscreenFn();
+            if (exitFn) exitFn.call(document);
+          } else {
+            requestFn.call(document.documentElement);
+          }
+        } catch (err) {
+          console.warn('[main] 全螢幕切換失敗：', err);
+        }
+      });
+      const updateFullscreenBtnLabel = function () {
+        fullscreenBtn.textContent = isCurrentlyFullscreen() ? '⛶ 離開全螢幕' : '⛶ 全螢幕';
+      };
+      document.addEventListener('fullscreenchange', updateFullscreenBtnLabel);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenBtnLabel);
+      document.addEventListener('msfullscreenchange', updateFullscreenBtnLabel);
+    }
   }
 
   // 下雪效果測試按鈕：觸發時機還沒定案前，先手動預覽。只有目前在
@@ -276,6 +319,18 @@ document.addEventListener('DOMContentLoaded', function () {
     beginExperience();
   });
 
+  endBtn.addEventListener('click', function () {
+    // 網頁基於瀏覽器安全限制，沒辦法強制關閉玩家的分頁（除非是網站自己
+    // 用window.open()開的分頁），所以這裡做的是「明確的結束狀態」：
+    // 按鈕跟提示文字淡出，同時若玩家先前有開啟全螢幕，一併嘗試離開，
+    // 讓畫面回到瀏覽器一般模式，方便玩家自行關閉分頁
+    const exitFn = getExitFullscreenFn();
+    if (exitFn && isCurrentlyFullscreen()) {
+      try { exitFn.call(document); } catch (err) { /* 忽略離開全螢幕失敗，不影響結尾流程 */ }
+    }
+    endGate.classList.add('is-closed');
+  });
+
   function beginExperience() {
     goToFog('enter');
   }
@@ -292,8 +347,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // 「一天只能玩一次」在這裡才算數，而不是一進入森林就算——
         // 避免玩家中途不小心關掉視窗，卻被誤判成「今天玩過了」。
         markPlayedToday();
-        // 之後這裡會是「回到現實」的收尾畫面，目前先印出 log 供測試確認。
-        console.log('[main] Ritual Loop 完整跑完一次（Fog exit 完成）');
+        // 濃霧背景維持在畫面上不切走，讓結尾畫面淡入蓋在最上層，
+        // 明確告訴玩家今天的 Ritual 已經結束，不會停在一片濃霧不知所措
+        endGate.classList.add('is-visible');
       }
     });
   }
