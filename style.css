@@ -1,0 +1,1129 @@
+/* ============================================================
+   Emotion Forest — Global Styles
+   ============================================================ */
+
+@font-face {
+  font-family: 'jf-openhuninn';
+  src: url('../assets/fonts/jf-openhuninn-2.1.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'jf-openhuninn', -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+/* 日記輸入框仍需要正常的文字選取/編輯行為，排除在防拷貝規則之外 */
+textarea, input {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+#stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* #app 是固定比例的畫布（比例對應 scene002_mainhub_bg.png 原始尺寸 1448:1086）。
+   不論視窗長寬比為何，畫面永遠等比縮放置中，多餘空間留黑邊，不會裁切內容，
+   所有子元素的 %-based 定位才能在任何螢幕尺寸下保持準確。 */
+#app {
+  position: relative;
+  width: min(100vw, 100vh * 1.33333);
+  height: min(100vh, 100vw * 0.75);
+  overflow: hidden;
+  background: #000;
+}
+
+/* 請橫放手機提示：預設隱藏，只在觸控裝置(無hover能力，排除桌機/筆電的滑鼠操作)
+   且目前是直向時才顯示，蓋在整個遊戲畫面最上層。轉成橫向後這個media query
+   自動不成立，提示會自動消失，不需要JS介入 */
+#rotatePrompt {
+  display: none;
+}
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+  #rotatePrompt {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #050810;
+    color: rgba(255, 245, 225, 0.9);
+    text-align: center;
+    font-family: 'jf-openhuninn', -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+  }
+}
+#rotatePromptIcon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  /* 手機圖示旋轉90度示意「請轉向」，柔和地緩慢來回擺動，不用生硬的靜止圖示 */
+  animation: rotatePromptSway 2.4s ease-in-out infinite;
+}
+@keyframes rotatePromptSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+#rotatePromptText {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  letter-spacing: 0.08em;
+}
+
+/* 每個 Scene 的根節點共用這個 class，由 SceneManager 負責淡入淡出 */
+.scene-root {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.scene-root.is-active {
+  opacity: 1;
+}
+.scene-root.no-transition {
+  transition: none;
+}
+
+.start-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  transition: opacity 1s ease;
+}
+.start-gate.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.start-gate__btn {
+  padding: 12px 32px;
+  background: rgba(255, 220, 150, 0.15);
+  border: 1px solid rgba(255, 220, 150, 0.5);
+  color: rgba(255, 245, 225, 0.95);
+  border-radius: 999px;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.start-gate__btn:hover { background: rgba(255, 220, 150, 0.28); }
+.start-gate__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.start-gate__btn:disabled:hover { background: rgba(255, 220, 150, 0.15); }
+/* 全螢幕按鈕：刻意做得比「進入森林」低調、小一號，這只是輔助功能，
+   不是Ritual體驗的一部分，不該搶走主按鈕的視覺焦點 */
+.start-gate__fullscreen-btn {
+  padding: 7px 18px;
+  background: transparent;
+  border: 1px solid rgba(255, 245, 225, 0.25);
+  color: rgba(255, 245, 225, 0.55);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.start-gate__fullscreen-btn:hover {
+  border-color: rgba(255, 245, 225, 0.45);
+  color: rgba(255, 245, 225, 0.8);
+}
+.start-gate__hint {
+  position: absolute;
+  bottom: calc(50% + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 245, 225, 0.75);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 1.4em;
+}
+
+/* ============================================================
+   開發測試面板（正式上線前整個移除，不屬於任何 Scene 的正式規格）
+   ============================================================ */
+.dev-panel {
+  position: absolute;
+  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #a8ffb0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  line-height: 1.7;
+  pointer-events: none;
+}
+.dev-panel__state {
+  color: #ffe28a;
+  font-weight: bold;
+}
+.dev-panel button {
+  pointer-events: auto;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dev-panel__checkbox {
+  pointer-events: auto;
+  display: block;
+  margin-top: 6px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ============================================================
+   Scene_001_Fog 專屬樣式
+   ============================================================ */
+.fog-scene__bg,
+.fog-scene__layer-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.fog-scene__bg {
+  background-image: url('../assets/images/scene001_fog/scene001_fog_bg.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.fog-scene__layer-wrap { z-index: 2; }
+
+.fog-scene__layer {
+  position: absolute;
+  top: -15%; left: -15%;
+  width: 130%; height: 130%;
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.fog-scene__layer-a {
+  background-image: url('../assets/images/scene001_fog/scene001_fog_layer_a.png');
+  z-index: 2;
+  animation: fogSwayA 18s ease-in-out infinite alternate,
+             fogBreatheA 12s ease-in-out infinite;
+}
+.fog-scene__layer-b {
+  background-image: url('../assets/images/scene001_fog/scene001_fog_layer_b.png');
+  z-index: 3;
+  animation: fogSwayB 24s ease-in-out infinite alternate,
+             fogBreatheB 16s ease-in-out infinite;
+}
+
+@keyframes fogSwayA { 0% { transform: translateX(-2%); } 100% { transform: translateX(2%); } }
+@keyframes fogSwayB { 0% { transform: translateX(2.5%); } 100% { transform: translateX(-2.5%); } }
+@keyframes fogBreatheA { 0%, 100% { opacity: 0.75; } 50% { opacity: 1.0; } }
+@keyframes fogBreatheB { 0%, 100% { opacity: 0.65; } 50% { opacity: 0.95; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fog-scene__layer-a { animation: fogBreatheA 24s ease-in-out infinite; }
+  .fog-scene__layer-b { animation: fogBreatheB 32s ease-in-out infinite; }
+}
+
+.touch-dissipate {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 70%);
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: touchDissipateAnim 3.6s ease-out forwards;
+}
+@keyframes touchDissipateAnim { 0% { opacity: 0; } 15% { opacity: 0.85; } 100% { opacity: 0; } }
+
+.fog-scene__dialogue {
+  position: absolute;
+  z-index: 5;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 245, 225, 0.85);
+  font-size: 1.65rem; /* 原 1.1rem，放大 1.5 倍 */
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 12px rgba(0,0,0,0.8);
+  opacity: 0;
+  animation: dialogueFadeIn 2s ease-in 1.5s forwards;
+  text-align: center;
+  padding: 0 20px;
+}
+@keyframes dialogueFadeIn { to { opacity: 1; } }
+
+.fog-scene.is-dissipating .fog-scene__layer-a,
+.fog-scene.is-dissipating .fog-scene__layer-b {
+  transition: opacity 3s ease-out;
+  opacity: 0 !important;
+  animation-play-state: paused;
+}
+.fog-scene.is-dissipating .fog-scene__bg {
+  transition: filter 3s ease-out;
+  filter: brightness(1.1);
+}
+
+.cinematic-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+}
+.cinematic-layer video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seed-planting__static-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.seed-planting__video {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.seed-planting__video.is-fading-out {
+  transition: opacity 2s ease;
+  opacity: 0;
+}
+
+/* ============================================================
+   通用佔位樣式（給尚未實作的 Scene 空殼使用）
+   ============================================================ */
+.mainhub-scene__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: #1a1a2e;
+  color: rgba(255, 230, 180, 0.9);
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ============================================================
+   Scene_002_MainHub 專屬樣式
+   ============================================================ */
+.mainhub-scene__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+  transition: background-image 0.1s;
+}
+/* 蜜柑抱著日記本時，桌上不該再有一本，切換成沒有日記本的背景圖版本。
+   需要 Nash 額外提供 scene002_mainhub_bg1.png（內容完全相同，只差小圓桌
+   上沒有日記本），放進同一個資料夾就會自動生效，還沒放之前不會有視覺變化。 */
+.mainhub-scene__bg.is-diary-hidden {
+  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg1.png');
+}
+
+.mainhub-scene__mikan {
+  position: absolute;
+  z-index: 2;
+  left: 67%;
+  top: 42%;
+  width: 16%;
+  height: auto;
+  pointer-events: none;
+}
+
+.mainhub-scene__dialogue {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  max-width: 74%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* 內容從底部往上長，區域本身固定，純粹用來定位、不畫背景 */
+  align-items: center;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  cursor: default;
+}
+.mainhub-scene__dialogue.is-visible {
+  opacity: 1;
+}
+/* greeting 階段文字短、不需要避開插圖框，但要避開日記本熱區(54%-63%)，改用較低的簡單定位 */
+.mainhub-scene__dialogue.is-greeting {
+  top: auto;
+  bottom: 18%;
+}
+/* post_planting 階段需要避開回憶插圖框，維持固定高區域 */
+.mainhub-scene__dialogue.is-post-planting {
+  top: 45%;
+  bottom: 35%;
+}
+.mainhub-scene__dialogue-inner {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  color: rgba(255, 245, 225, 0.9);
+  font-size: 1.575rem; /* 原 1.05rem，放大 1.5 倍 */
+  letter-spacing: 0.12em;
+  line-height: 1.8;
+  text-shadow: 0 0 12px rgba(0,0,0,0.85);
+  text-align: center;
+  padding: 1vmin 1.2vmin; /* 貼近文字，約螢幕尺寸1% */
+  border-radius: 12px;
+  background: rgba(8, 10, 20, 0.55); /* 貼緊文字的半透明背板，X/Y 都會貼齊 */
+  pointer-events: none; /* 預設不可點擊，避免對話框淡出後文字氣泡仍佔用點擊區域 */
+  cursor: default;
+}
+.mainhub-scene__dialogue.is-visible .mainhub-scene__dialogue-inner {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.mainhub-scene__dialogue-next {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.275rem; /* 原 0.85rem，放大 1.5 倍 */
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  animation: dialogueNextBounce 1.6s ease-in-out infinite;
+}
+.mainhub-scene__dialogue-next.is-visible {
+  opacity: 0.7;
+}
+@keyframes dialogueNextBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+.mainhub-scene__farewell-choice {
+  position: absolute;
+  z-index: 5;
+  top: 67%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.mainhub-scene__farewell-choice.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mainhub-scene__farewell-choice-btn {
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 220, 150, 0.4);
+  background: rgba(255, 245, 225, 0.08);
+  color: rgba(255, 245, 225, 0.9);
+  font-family: inherit;
+}
+.mainhub-scene__farewell-choice-btn:hover {
+  background: rgba(255, 220, 150, 0.22);
+}
+.mainhub-scene__farewell-choice-btn--leave {
+  background: rgba(255, 220, 150, 0.18);
+  border-color: rgba(255, 220, 150, 0.55);
+}
+
+.mainhub-scene__hotspot {
+  position: absolute;
+  z-index: 3;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.mainhub-scene__hotspot.is-available {
+  opacity: 1;
+  pointer-events: auto;
+  animation: hotspotPulse 2.4s ease-in-out infinite;
+}
+@keyframes hotspotPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+.mainhub-scene__hotspot--diary {
+  left: 41%;
+  top: 54%;
+  width: 11%;
+  height: 9%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,150,0.35) 0%, rgba(255,220,150,0) 70%);
+}
+/* 貓掌互動觸發後，日記本疊加一層更明顯、更飽和的光暈，
+   跟原本的 is-available 底色疊加，讓「被點亮」的瞬間感受得到差異 */
+.mainhub-scene__hotspot--diary.is-chair-lit {
+  background:
+    radial-gradient(circle, rgba(255,235,180,0.65) 0%, rgba(255,220,150,0.15) 55%, rgba(255,220,150,0) 75%);
+  animation: hotspotPulse 1.8s ease-in-out infinite;
+}
+
+.mainhub-scene__hotspot--farewell {
+  left: 2%;
+  top: 85%;
+  width: 10%;
+  height: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,210,255,0.3) 0%, rgba(180,210,255,0) 70%);
+}
+
+/* 空搖椅貓掌熱區：座標是從Nash標記的實際美術圖用像素分析算出來的
+   （紅圈範圍 left:19.34% top:44.11% width:10.22% height:9.76%），
+   這裡四邊各留一點padding方便點擊，不用抓得跟畫面上的貓掌一樣死板 */
+.mainhub-scene__hotspot--chair-paw {
+  left: 18.3%;
+  top: 43%;
+  width: 12.3%;
+  height: 11.8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,230,255,0.3) 0%, rgba(200,230,255,0) 70%);
+}
+
+/* 貓掌飛向日記本的光球，FLIP技巧用JS改left/top位移，這裡只負責外觀 */
+.mainhub-scene__chair-light-orb {
+  position: absolute;
+  z-index: 4;
+  width: 1.6vmin;
+  height: 1.6vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,250,220,0.95) 0%, rgba(255,235,180,0.5) 55%, rgba(255,235,180,0) 100%);
+  box-shadow: 0 0 12px 4px rgba(255,235,180,0.6);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+.mainhub-scene__chair-light-orb.is-visible {
+  opacity: 1;
+}
+
+.mainhub-scene__memory-frame {
+  position: absolute;
+  z-index: 3;
+  /* 2024 更新：放大為原尺寸 1.5 倍（11%→16.5%, 24%→36%），
+     並往右下位移（left +1.5%, top +3%），呼應蜜柑頭頂偏移的視覺定位 */
+  left: 53.5%;
+  top: 12%;
+  width: 14%;
+  height: 30%;
+  border-radius: 6px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+}
+.mainhub-scene__memory-frame.is-visible {
+  opacity: 0.9;
+}
+.mainhub-scene__memory-img,
+.mainhub-scene__memory-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 異常天氣：下雪。z-index刻意設得比聚光燈遮罩(z-index:2)更高，這樣即使
+   回憶場景把背景暗下去，飄落的雪花依然看得到，不會被遮罩整片蓋住——
+   就像真實夜晚下雪，光線昏暗但雪花本身還是看得見的。
+   粒子數量少、飄得慢、透明度低，走克制路線，不是滿版天氣系統 */
+.mainhub-scene__snow {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+.mainhub-scene__snow.is-active {
+  opacity: 1;
+}
+.mainhub-scene__snowflake {
+  position: absolute;
+  top: -5%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+  animation-name: snowFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes snowFall {
+  0% { top: -5%; margin-left: 0; opacity: 0; }
+  8% { opacity: var(--flake-opacity, 0.6); }
+  50% { margin-left: 14px; }
+  92% { opacity: var(--flake-opacity, 0.6); }
+  100% { top: 105%; margin-left: -10px; opacity: 0; }
+}
+
+/* 異常天氣：花瓣雨。跟下雪共用同一套z-index/淡入淡出/左右搖擺飄落邏輯，
+   只是渲染用Nash提供的petal.png/petal-1.png圖片，並多了緩慢旋轉的效果 */
+.mainhub-scene__petal-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+.mainhub-scene__petal-rain.is-active {
+  opacity: 1;
+}
+.mainhub-scene__petal {
+  position: absolute;
+  top: -8%;
+  object-fit: contain;
+  animation-name: petalFall, petalRotate;
+  animation-timing-function: linear, linear;
+  animation-iteration-count: infinite, infinite;
+  animation-duration: var(--fall-duration, 12s), var(--rotate-duration, 6s);
+}
+@keyframes petalFall {
+  0% { top: -8%; margin-left: 0; opacity: 0; }
+  8% { opacity: var(--flake-opacity, 0.6); }
+  50% { margin-left: 20px; }
+  92% { opacity: var(--flake-opacity, 0.6); }
+  100% { top: 108%; margin-left: -16px; opacity: 0; }
+}
+@keyframes petalRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mainhub-scene__garden {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 回憶場景聚光燈：z-index蓋過背景(1)跟花圃(2)，但低於蜜柑(z-index2但視覺
+   上蜜柑會在挖洞範圍內所以沒差)、回憶框(3)、對話框(5)。挖洞形狀由JS動態
+   設定座標(setSpotlightEllipse/setSpotlightRect)，這裡只負責淡入淡出。 */
+.mainhub-scene__memory-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2.2s ease;
+}
+.mainhub-scene__memory-spotlight.is-visible {
+  opacity: 1;
+}
+.mainhub-scene__memory-spotlight-fill {
+  fill: rgba(3, 5, 12, 0.82);
+}
+
+/* 回憶播放期間的柔光效果：蜜柑、回憶框、對話框疊加一層淡淡的光暈，
+   凸顯視覺焦點在牠們身上，跟聚光燈遮罩共用差不多的淡入淡出節奏 */
+.mainhub-scene__mikan.is-memory-glow {
+  filter: drop-shadow(0 0 1.2vmin rgba(255, 235, 190, 0.55)) drop-shadow(0 0 2.4vmin rgba(255, 220, 150, 0.35));
+  transition: filter 2s ease;
+}
+.mainhub-scene__memory-frame.is-memory-glow {
+  box-shadow: 0 0 3vmin rgba(255, 230, 180, 0.5), 0 0 24px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 2s ease;
+}
+.mainhub-scene__dialogue.is-memory-glow .mainhub-scene__dialogue-inner {
+  box-shadow: 0 0 2.5vmin rgba(255, 230, 180, 0.4);
+  transition: box-shadow 2s ease;
+}
+
+.mainhub-scene__garden-plant {
+  position: absolute;
+  width: 10.8%; /* 統一 1.2 倍（原 9% → 10.8%） */
+  height: auto;
+  /* 圖片已預先裁切到緊貼內容邊界，底部中心 = translate(-50%, -100%)，
+     對應「垂直中心線」X 軸 + 「由下往上第一個非透明像素」Y 軸的定位規則 */
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+
+/* ---------------- 隱藏版互動彩蛋（4 個，皆為無形熱區，不畫可見邊界） ---------------- */
+.mainhub-scene__egg {
+  position: absolute;
+  z-index: 4;
+  cursor: pointer;
+}
+.mainhub-scene__egg--lamp {
+  left: 34%;
+  top: 23%;
+  width: 11%;
+  height: 18%;
+}
+.mainhub-scene__egg--teapot {
+  left: 43%;
+  top: 47%;
+  width: 11%;
+  height: 7%;
+}
+.mainhub-scene__egg--lake {
+  left: 50%;
+  top: 15%;
+  width: 35%;
+  height: 25%;
+}
+/* 座標是從Nash標記的實際截圖用像素分析算出來的（換算回1448x1086畫布後
+   約 left:67.5% top:41.75% width:15.38% height:23.75%），這裡四邊留一點
+   padding方便點擊，取代原本偏高、會誤觸到湖水的範圍 */
+.mainhub-scene__egg--mikan {
+  left: 65.5%;
+  top: 40%;
+  width: 18%;
+  height: 27%;
+}
+
+/* 木門彩蛋：座標是從Nash標記的實際截圖用像素分析算出來的
+   （紅圈範圍 left:6.91% top:23.85% width:10.70% height:17.50%），
+   為未來新增「小屋內場景」預留伏筆 */
+.mainhub-scene__egg--door {
+  left: 6.9%;
+  top: 23.85%;
+  width: 10.7%;
+  height: 17.5%;
+}
+
+.mainhub-scene__lamp-glow {
+  position: absolute;
+  z-index: 2;
+  left: 34%;
+  top: 23%;
+  width: 11%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,150,0.5) 0%, rgba(255,220,150,0) 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.mainhub-scene__lamp-glow.is-steady {
+  opacity: 0.45;
+  transition: opacity 4.4s ease; /* 跟黑幕淡出的4.4秒同步，避免燈已經全亮但背景還沒揭幕完的不同步感 */
+}
+.mainhub-scene__lamp-glow.is-pulsing {
+  animation: lampGlowPulse 1.5s ease-out;
+}
+@keyframes lampGlowPulse {
+  0% { opacity: 0; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* 開場揭幕黑幕：圓心對齊守夜燈位置(39.5%, 32%)，一開始只有燈那圈透光，
+   其餘全黑，隨著 opacity 淡出，背景才逐漸顯現全貌。只在 greeting 階段
+   進場那一刻使用一次，post_planting 會在 JS 裡直接 display:none 隱藏掉。 */
+.mainhub-scene__reveal-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: radial-gradient(ellipse 6vmin 10vmin at 39.5% 32%, transparent 0%, transparent 40%, rgba(3, 5, 12, 0.95) 100%);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 4.4s ease-in; /* 原本2.2s，時間加倍；曲線改ease-in讓初期變化更慢，比較感受得到「慢慢淡出」 */
+}
+.mainhub-scene__reveal-mask.is-hidden {
+  opacity: 0;
+}
+
+.mainhub-scene__steam {
+  position: absolute;
+  z-index: 2;
+  left: 46%;
+  top: 40%;
+  width: 6%;
+  height: 12%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(2px);
+}
+.mainhub-scene__steam.is-active {
+  animation: steamPuff 3s ease-out;
+}
+@keyframes steamPuff {
+  0% { opacity: 0; transform: translateY(0) scale(0.8); }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.4); }
+}
+
+.mainhub-scene__ripple {
+  position: absolute;
+  z-index: 2;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border: 1px solid rgba(200, 225, 255, 0.7);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: rippleExpand 1.8s ease-out forwards;
+}
+@keyframes rippleExpand {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(12); opacity: 0; }
+}
+
+/* ---------------- 日記介面 ---------------- */
+.diary-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.diary-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.diary-overlay__dimmer {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 20, 0.55);
+}
+
+.diary-overlay__panel {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 80%);
+  background: linear-gradient(160deg, #3a2e22, #241a12);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.diary-overlay__input {
+  width: 100%;
+  min-height: 120px;
+  background: rgba(255, 245, 225, 0.06);
+  border: 1px solid rgba(255, 245, 225, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 245, 225, 0.9);
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 12px;
+  resize: none;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+}
+.diary-overlay__input::placeholder {
+  color: rgba(255, 245, 225, 0.4);
+}
+.diary-overlay__input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.diary-overlay__actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.diary-overlay__actions button {
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 245, 225, 0.3);
+  background: rgba(255, 245, 225, 0.05);
+  color: rgba(255, 245, 225, 0.85);
+}
+.diary-overlay__submit {
+  background: rgba(255, 220, 150, 0.2) !important;
+  border-color: rgba(255, 220, 150, 0.5) !important;
+}
+.diary-overlay__blank-confirm {
+  display: none;
+  margin-top: 16px;
+  text-align: right;
+}
+.diary-overlay__blank-confirm.is-visible {
+  display: block;
+}
+.diary-overlay__blank-confirm-text {
+  margin: 0 0 10px;
+  color: rgba(255, 245, 225, 0.85);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+.diary-overlay__blank-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.diary-overlay__blank-confirm-actions button {
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 245, 225, 0.3);
+  background: rgba(255, 245, 225, 0.05);
+  color: rgba(255, 245, 225, 0.85);
+}
+.diary-overlay__blank-confirm-yes {
+  background: rgba(255, 220, 150, 0.2) !important;
+  border-color: rgba(255, 220, 150, 0.5) !important;
+}
+.diary-overlay__copyright {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.12);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------------- 回憶心情介面（雙框並列） ---------------- */
+/* mikan touch diary 過場動畫：點擊「回憶心情」後，蜜柑先碰觸日記本的短片，
+   播完（或播放失敗時直接略過）才進入回憶雙框介面。不是切場景，只是 MainHub
+   內部的一個局部 overlay，跟回憶雙框共用同一套淡入淡出邏輯。 */
+.mainhub-scene__touch-diary-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.mainhub-scene__touch-diary-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mainhub-scene__touch-diary-dimmer {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 20, 0.75);
+}
+.mainhub-scene__touch-diary-video {
+  position: relative;
+  width: min(46vw, 640px);
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  background: #000;
+}
+
+.memory-recall-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.memory-recall-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.memory-recall-overlay__dimmer {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 20, 0.7);
+}
+.memory-recall-overlay__frames {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 1.5%;
+  align-items: flex-start;
+}
+/* 兩框尺寸比例對應原始素材 848x1264；植物框維持白底，日記框在下方覆蓋為鵝黃色泛黃日記本風格 */
+.memory-recall-overlay__diary-frame,
+.memory-recall-overlay__plant-frame {
+  width: 20vw;
+  aspect-ratio: 848 / 1264;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 4% 6%;
+}
+.memory-recall-overlay__plant-name {
+  flex: none;
+  text-align: center;
+}
+.memory-recall-overlay__plant-name-zh {
+  color: #8e6bb0; /* 薰衣草紫 */
+  font-size: 1.25rem; /* 20px */
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+.memory-recall-overlay__plant-name-en {
+  color: #8e6bb0;
+  font-size: 1rem; /* 16px */
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.memory-recall-overlay__plant-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.memory-recall-overlay__plant-language {
+  flex: none;
+  text-align: center;
+  color: #8e6bb0;
+  font-size: 1rem; /* 16px */
+  letter-spacing: 0.06em;
+  margin-top: 4%;
+}
+.memory-recall-overlay__diary-frame {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #f7ecc4, #efe0a8);
+  border: 1px solid rgba(140, 105, 45, 0.3);
+  box-sizing: border-box;
+}
+.memory-recall-overlay__diary-half {
+  flex: 1 1 50%;
+  min-height: 0;
+  padding: 6% 6% 4%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox：隱藏捲軸但保留捲動功能 */
+  -ms-overflow-style: none; /* 舊版 Edge / IE */
+}
+.memory-recall-overlay__diary-half::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Edge(Chromium) */
+}
+.memory-recall-overlay__diary-divider {
+  flex: none;
+  height: 1px;
+  margin: 0 6%;
+  background: rgba(120, 90, 40, 0.35);
+}
+.memory-recall-overlay__half-header {
+  color: #6b4f22;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  margin-bottom: 3%;
+  opacity: 0.85;
+}
+.memory-recall-overlay__diary-text,
+.memory-recall-overlay__memory-text {
+  color: #4a3820;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  white-space: pre-wrap;
+}
+.memory-recall-overlay__plant-img,
+.memory-recall-overlay__plant-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.memory-recall-overlay__controls {
+  position: relative;
+  z-index: 1;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.memory-recall-overlay__controls select,
+.memory-recall-overlay__controls button {
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 245, 225, 0.3);
+  background: rgba(255, 245, 225, 0.08);
+  color: rgba(255, 245, 225, 0.9);
+  font-family: inherit;
+}
+/* 瀏覽器原生下拉選單清單背景通常是白色，但上面 select 本身的文字顏色被設成
+   接近白色（配合收合狀態貼合深色 overlay），若不特別覆蓋，選單展開時會變成
+   白字配白底，只有滑鼠移到那一行、被高亮反白後才看得見文字。這裡針對
+   option 另外指定深色文字＋白底，跟 select 收合時的樣式分開處理。 */
+.memory-recall-overlay__controls select option {
+  color: #2a2a2a;
+  background: #fff;
+}
+.memory-recall-overlay__start {
+  background: rgba(255, 220, 150, 0.2) !important;
+  border-color: rgba(255, 220, 150, 0.5) !important;
+}
+
