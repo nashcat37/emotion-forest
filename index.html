@@ -43,6 +43,14 @@
     <button class="start-gate__fullscreen-btn" id="fullscreenBtn" style="display:none;">⛶ 全螢幕</button>
   </div>
 
+  <!-- 結尾畫面：Fog exit 播完後顯示，架構完全比照 start-gate。
+       濃霧背景維持在畫面上不切走，這個畫面淡入蓋在最上層，
+       讓玩家清楚知道今天的 Ritual 已經結束，不會停在一片濃霧不知所措 -->
+  <div class="end-gate" id="endGate">
+    <div class="end-gate__text">今晚的故事先說到這，<br>守夜燈會一直亮著、等你回來。</div>
+    <button class="end-gate__btn" id="endBtn">離開森林</button>
+  </div>
+
   <!-- 共用工具 -->
   <script src="js/utils/typewriter.js"></script>
 
