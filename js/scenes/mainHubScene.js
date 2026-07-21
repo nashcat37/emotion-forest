@@ -69,6 +69,16 @@ window.EF.scenes.mainhub = (function () {
       '漸漸...你會發現...靜得只聽得到蟲鳴'
     ],
     breathingHolds: [1800, 2200, 2800, 2200, 1800],
+    // Day2以後不再每次都接完整深呼吸引導，改用兩組短句依單雙數天交替，
+    // 避免每天流程都一樣長。Day2/4/6/8...用even，Day3/5/7/9...用odd
+    diarySubmitAckEven: [
+      '謝謝你跟我分享',
+      '這裡有我，還有你種的情緒植物，我們都是陪伴彼此的好朋友，喵~'
+    ],
+    diarySubmitAckOdd: [
+      '謝謝你讓我知道',
+      '寫完之後，心還是有點亂，可再試試之前的小魔法-深呼吸唷~喵~'
+    ],
     blankConfirmPrompt: '喵？要現在就送出嗎～ 還是想再想想？',
     chairPawLines: [
       '坐起來很舒服吧～其實這搖椅有魔法喔～',
@@ -171,7 +181,7 @@ window.EF.scenes.mainhub = (function () {
       '        <button class="diary-overlay__blank-confirm-no">再想想</button>' +
       '      </div>' +
       '    </div>' +
-      '    <div class="diary-overlay__copyright">copyright© 2026 nsahcat網站．版權所有</div>' +
+      '    <div class="diary-overlay__copyright">copyright© 2026 nashcat網站．版權所有</div>' +
       '  </div>' +
       '</div>' +
       '<div class="mainhub-scene__touch-diary-overlay">' +
@@ -948,10 +958,11 @@ window.EF.scenes.mainhub = (function () {
           const holds = [undefined, undefined].concat(COPY.breathingHolds);
           playAckSequence(lines, diaryText, holds);
         } else {
-          // Day2以後：「謝謝你告訴我」接上同一套深呼吸延伸對話
-          const lines = [COPY.diarySubmitAck].concat(COPY.breathingLines);
-          const holds = [undefined].concat(COPY.breathingHolds);
-          playAckSequence(lines, diaryText, holds);
+          // Day2以後：依單雙數天交替兩組短句，取代原本固定接完整深呼吸引導，
+          // 避免每天流程都一樣長。day是偶數(2/4/6/8...)用Even，
+          // 奇數(3/5/7/9...)用Odd，播完直接接seed planting動畫
+          const lines = day % 2 === 0 ? COPY.diarySubmitAckEven : COPY.diarySubmitAckOdd;
+          playAckSequence(lines, diaryText);
         }
       }
 
