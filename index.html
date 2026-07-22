@@ -51,6 +51,19 @@
     <button class="end-gate__btn" id="endBtn">離開森林</button>
   </div>
 
+  <!-- 開發測試面板，正式上線前會整個移除 -->
+  <div class="dev-panel" id="devPanel">
+    <div>state: <span class="dev-panel__state" id="devState">-</span></div>
+    <div id="devExtra"></div>
+    <button id="devResetBtn">重置 isFirstEver</button>
+    <label class="dev-panel__checkbox">
+      <input type="checkbox" id="devBypassGate" /> 測試用：忽略時間限制
+    </label>
+    <button id="devSnowBtn">測試：下雪效果</button>
+    <button id="devPetalBtn">測試：花瓣雨效果</button>
+    <button id="devMemoryMatchBtn">測試：記憶翻牌小遊戲</button>
+  </div>
+
   <!-- 共用工具 -->
   <script src="js/utils/typewriter.js"></script>
 
@@ -58,6 +71,7 @@
   <script src="js/managers/memoryManager.js"></script>
   <script src="js/managers/gardenManager.js"></script>
   <script src="js/managers/diaryManager.js"></script>
+  <script src="js/managers/memoryMatchManager.js"></script>
 
   <!-- Scene 模組 -->
   <script src="js/scenes/fogScene.js"></script>

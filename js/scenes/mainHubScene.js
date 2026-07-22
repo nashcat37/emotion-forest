@@ -51,8 +51,14 @@ window.EF.scenes.mainhub = (function () {
       '每段情緒、心情，都有它存在的意義',
       '它們都是一種陪伴唷，喵~'
     ],
-    diaryIntroReturning: [
-      '有你及你的文字的陪伴真好，抱著日記的我，昨晚睡得更香甜了，喵~'
+    // Day2以後（hasHistory為true時）依單雙數天交替，避免每天都看到同一句話。
+    // 這個分支跟Day1的diaryIntroFirstTime是完全獨立的邏輯（依hasHistory切換），
+    // Day1不會用到這裡，所以奇偶分組不用擔心跟Day1的內容衝突
+    diaryIntroReturningOdd: [
+      '有你及你的文字的陪伴真好，抱著日記的我，昨晚睡得更香甜了，喵～'
+    ],
+    diaryIntroReturningEven: [
+      '你說抱著日記會不會不好睡? 不會唷~因為你的文字讓它更溫暖了～喵～'
     ],
     diarySubmitAck: '謝謝你告訴我。',
     diarySubmitAckNamed: '很開心認識你 {name}～ 喵～',
@@ -80,18 +86,34 @@ window.EF.scenes.mainhub = (function () {
       '寫完之後，心還是有點亂，可再試試之前的小魔法-深呼吸唷~喵~'
     ],
     blankConfirmPrompt: '喵？要現在就送出嗎～ 還是想再想想？',
-    chairPawLines: [
+    // 貓掌互動依單雙數天交替，避免每天都看到同一組話
+    chairPawLinesOdd: [
       '坐起來很舒服吧～其實這搖椅有魔法喔～',
       '它能幫助我理解你文字中的情緒，產生共鳴'
+    ],
+    chairPawLinesEven: [
+      '如果坐著坐著不小心睡著了～也沒關係唷～',
+      '共鳴魔法還是會啟動，也許我們會在夢裡相遇，喵～'
     ],
     doorLines: [
       '喵~ 隨便進入主人跟我的小屋不太禮貌喔~',
       '等我們熟一點，我再考慮帶你參觀~'
     ],
-    stayLines: [
+    stayLinesFirstTime: [
       '喵~我想好好記下你今天的分享，以及你讓我想起的回憶',
       '因為它們同樣珍貴且值得珍藏',
       '你可以多待一會兒，靜靜感受與欣賞'
+    ],
+    // Day2以後依單雙數天交替，避免每天都看到同一句話
+    stayLinesEven: [
+      '你的分享，還有我的回憶',
+      '全～～～部～都是我最珍貴的寶物喵~',
+      '它們都會在這本日記裡，好好保管著～'
+    ],
+    stayLinesOdd: [
+      '偷偷跟你說...',
+      '我自己也有寫日記的習慣唷～',
+      '只是...我不小心把它搞丟了~喵哈哈～'
     ],
     farewellPrompt: '謝謝你今天願意陪著我。你準備好要回去了嗎？',
     farewell: '明天，我還在這裡。',
@@ -117,6 +139,9 @@ window.EF.scenes.mainhub = (function () {
     // 每天(每次mount)第一次點擊日記本熱區時，蜜柑先說一段開場白才打開日記面板，
     // 同一天內重複點擊（例如按「先不寫」取消後又點一次）直接開面板，不會重播
     let diaryIntroPlayedToday = false;
+    // 觸控裝置（手機/平板）打開日記面板時不自動focus輸入框，因為自動focus
+    // 會立刻跳出虛擬鍵盤佔掉近半螢幕；桌機保留自動focus，方便直接打字
+    const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
     container.classList.add('mainhub-scene');
     container.innerHTML =
@@ -187,6 +212,15 @@ window.EF.scenes.mainhub = (function () {
       '<div class="mainhub-scene__touch-diary-overlay">' +
       '  <div class="mainhub-scene__touch-diary-dimmer"></div>' +
       '  <video class="mainhub-scene__touch-diary-video" src="assets/videos/cine_mikan_touch_diary.mp4" playsinline></video>' +
+      '</div>' +
+      '<div class="memory-match-overlay">' +
+      '  <div class="memory-match-overlay__dimmer"></div>' +
+      '  <div class="memory-match-overlay__panel">' +
+      '    <div class="memory-match-overlay__status"></div>' +
+      '    <div class="memory-match-overlay__grid"></div>' +
+      '    <div class="memory-match-overlay__feedback"></div>' +
+      '    <button class="memory-match-overlay__close">先不玩了</button>' +
+      '  </div>' +
       '</div>' +
       '<div class="memory-recall-overlay">' +
       '  <div class="memory-recall-overlay__dimmer"></div>' +
@@ -266,6 +300,12 @@ window.EF.scenes.mainhub = (function () {
     const touchDiaryOverlay = container.querySelector('.mainhub-scene__touch-diary-overlay');
     const touchDiaryVideo = container.querySelector('.mainhub-scene__touch-diary-video');
 
+    const memoryMatchOverlay = container.querySelector('.memory-match-overlay');
+    const memoryMatchStatus = container.querySelector('.memory-match-overlay__status');
+    const memoryMatchGrid = container.querySelector('.memory-match-overlay__grid');
+    const memoryMatchFeedback = container.querySelector('.memory-match-overlay__feedback');
+    const memoryMatchCloseBtn = container.querySelector('.memory-match-overlay__close');
+
     const recallOverlay = container.querySelector('.memory-recall-overlay');
     const recallDiaryHeader = container.querySelector('.memory-recall-overlay__diary-header');
     const recallDiaryText = container.querySelector('.memory-recall-overlay__diary-text');
@@ -311,13 +351,13 @@ window.EF.scenes.mainhub = (function () {
     }
 
     // ---------------- 對話文字（打字機效果） ----------------
-    function showDialogue(text, onComplete2) {
+    function showDialogue(text, onComplete2, speedOverride) {
       if (cancelTypewriter) cancelTypewriter();
       dialogueEl.classList.add('is-visible');
       dialogueNextEl.classList.remove('is-visible');
       isTyping = true;
       cancelTypewriter = window.EF.typewriter(text, dialogueTextEl, {
-        speed: 110,
+        speed: speedOverride || 110,
         onComplete: function () {
           isTyping = false;
           cancelTypewriter = null;
@@ -526,10 +566,176 @@ window.EF.scenes.mainhub = (function () {
     function hidePetalRain() {
       petalRainEl.classList.remove('is-active');
     }
+
+    // ---------------- 記憶翻牌小遊戲（合作模式：幫蜜柑找回記憶） ----------------
+    // 目前先做成獨立可測試的版本，還沒接上「第3天解鎖」跟守夜燈熱區的
+    // 正式觸發流程（下一階段才會做），這裡先透過dev panel按鈕直接開局測試。
+    // 遊戲邏輯（洗牌/配對判斷/蜜柑AI）完全交給MemoryMatchManager，這裡
+    // 只負責畫面渲染跟流程串接。
+    const MM_FEEDBACK_LINES = [
+      '你今天很快就找到蜜柑最珍藏的那組記憶～',
+      '喵！這段記憶......好像有點懷念的感覺。',
+      '謝謝你，這段記憶又找回來了一點點。',
+      '蜜柑覺得，這段記憶跟你有點像呢，喵～'
+    ];
+    let mmDeck = [];
+    let mmFlippedIds = [];
+    let mmRevealedMemory = {}; // {cardId: image} 這局遊戲裡曾經翻開過、還沒配對成功的牌
+    let mmMatchedCount = 0;
+    let mmLocked = false;
+
+    function renderMemoryMatchGrid() {
+      memoryMatchGrid.innerHTML = '';
+      mmDeck.forEach(function (card) {
+        const cell = document.createElement('div');
+        cell.className = 'memory-match-overlay__card';
+        cell.dataset.cardId = card.id;
+        cell.innerHTML =
+          '<div class="memory-match-overlay__card-inner">' +
+          '  <div class="memory-match-overlay__card-back">🐾</div>' +
+          '  <div class="memory-match-overlay__card-front"><img src="' + card.image + '" alt="" /></div>' +
+          '</div>';
+        memoryMatchGrid.appendChild(cell);
+      });
+    }
+
+    function updateMemoryMatchStatus(turnText) {
+      memoryMatchStatus.textContent = turnText;
+    }
+
+    function getCardEl(cardId) {
+      return memoryMatchGrid.querySelector('[data-card-id="' + cardId + '"]');
+    }
+
+    function showMemoryMatchFeedback(text) {
+      memoryMatchFeedback.textContent = text;
+      memoryMatchFeedback.classList.add('is-visible');
+      const t = setTimeout(function () {
+        memoryMatchFeedback.classList.remove('is-visible');
+      }, 2200);
+      cleanupFns.push(function () { clearTimeout(t); });
+    }
+
+    function openMemoryMatchGame() {
+      mmDeck = window.EF.MemoryMatchManager.createDeck();
+      mmFlippedIds = [];
+      mmRevealedMemory = {};
+      mmMatchedCount = 0;
+      mmLocked = false;
+      renderMemoryMatchGrid();
+      updateMemoryMatchStatus('輪到你囉，翻開兩張牌看看～');
+      memoryMatchFeedback.classList.remove('is-visible');
+      memoryMatchOverlay.classList.add('is-open');
+    }
+
+    function closeMemoryMatchGame() {
+      memoryMatchOverlay.classList.remove('is-open');
+    }
+
+    function flipCardVisual(cardId, faceUp) {
+      const el = getCardEl(cardId);
+      if (el) el.classList.toggle('is-flipped', faceUp);
+    }
+
+    function markMatchedVisual(idA, idB) {
+      [idA, idB].forEach(function (id) {
+        const el = getCardEl(id);
+        if (el) el.classList.add('is-matched');
+      });
+    }
+
+    // 兩張牌翻開後的共用判斷邏輯，玩家/蜜柑都走這條路
+    function resolvePair(idA, idB, actor) {
+      mmLocked = true;
+      const matched = window.EF.MemoryMatchManager.isMatch(mmDeck, idA, idB);
+      const holdMs = matched ? 700 : 1100;
+      const t = setTimeout(function () {
+        if (matched) {
+          mmDeck[idA].matched = true;
+          mmDeck[idB].matched = true;
+          delete mmRevealedMemory[idA];
+          delete mmRevealedMemory[idB];
+          markMatchedVisual(idA, idB);
+          mmMatchedCount++;
+          showMemoryMatchFeedback(MM_FEEDBACK_LINES[Math.floor(Math.random() * MM_FEEDBACK_LINES.length)]);
+
+          if (window.EF.MemoryMatchManager.isGameComplete(mmDeck)) {
+            updateMemoryMatchStatus('你們一起找回了所有的記憶碎片，喵～');
+            mmLocked = true;
+            return;
+          }
+
+          mmFlippedIds = [];
+          mmLocked = false;
+          if (actor === 'player') {
+            updateMemoryMatchStatus('配對成功！輪到你繼續翻～');
+          } else {
+            updateMemoryMatchStatus('蜜柑想起來了！蜜柑繼續翻～');
+            triggerMikanTurn();
+          }
+        } else {
+          flipCardVisual(idA, false);
+          flipCardVisual(idB, false);
+          mmFlippedIds = [];
+          mmLocked = false;
+          if (actor === 'player') {
+            updateMemoryMatchStatus('沒對上呢，換蜜柑翻翻看～');
+            triggerMikanTurn();
+          } else {
+            updateMemoryMatchStatus('蜜柑也沒想起來，換你翻翻看～');
+          }
+        }
+      }, holdMs);
+      cleanupFns.push(function () { clearTimeout(t); });
+    }
+
+    function onMemoryMatchCardClick(e) {
+      if (mmLocked) return;
+      const cell = e.target.closest('.memory-match-overlay__card');
+      if (!cell) return;
+      const cardId = parseInt(cell.dataset.cardId, 10);
+      const card = mmDeck[cardId];
+      if (!card || card.matched || mmFlippedIds.indexOf(cardId) !== -1) return;
+
+      flipCardVisual(cardId, true);
+      mmRevealedMemory[cardId] = card.image;
+      mmFlippedIds.push(cardId);
+
+      if (mmFlippedIds.length === 2) {
+        resolvePair(mmFlippedIds[0], mmFlippedIds[1], 'player');
+      }
+    }
+    memoryMatchGrid.addEventListener('click', onMemoryMatchCardClick);
+    cleanupFns.push(function () { memoryMatchGrid.removeEventListener('click', onMemoryMatchCardClick); });
+
+    function triggerMikanTurn() {
+      mmLocked = true;
+      const tThink = setTimeout(function () {
+        const move = window.EF.MemoryMatchManager.decideMikanMove(mmDeck, mmRevealedMemory, day);
+        const idA = move[0], idB = move[1];
+        if (idA === undefined || idB === undefined) return; // 保險：牌不夠了就不動作
+
+        flipCardVisual(idA, true);
+        mmRevealedMemory[idA] = mmDeck[idA].image;
+        const tSecond = setTimeout(function () {
+          flipCardVisual(idB, true);
+          mmRevealedMemory[idB] = mmDeck[idB].image;
+          mmFlippedIds = [idA, idB];
+          resolvePair(idA, idB, 'mikan');
+        }, 700);
+        cleanupFns.push(function () { clearTimeout(tSecond); });
+      }, 900);
+      cleanupFns.push(function () { clearTimeout(tThink); });
+    }
+
+    memoryMatchCloseBtn.addEventListener('click', closeMemoryMatchGame);
+    cleanupFns.push(function () { memoryMatchCloseBtn.removeEventListener('click', closeMemoryMatchGame); });
+
     // 暫存給 dev panel 的測試按鈕用（手動預覽/強制開關，跟下面的自動觸發並存）
     window.EF.mainhubDevControls = {
       showSnow: showSnow, hideSnow: hideSnow,
-      showPetalRain: showPetalRain, hidePetalRain: hidePetalRain
+      showPetalRain: showPetalRain, hidePetalRain: hidePetalRain,
+      openMemoryMatchGame: openMemoryMatchGame
     };
     cleanupFns.push(function () { window.EF.mainhubDevControls = null; });
 
@@ -801,11 +1007,12 @@ window.EF.scenes.mainhub = (function () {
         diaryActions.style.display = '';
         diaryInput.disabled = false;
         diaryInput.placeholder = COPY.diaryPlaceholder;
-        diaryInput.focus();
+        if (!isTouchDevice) diaryInput.focus();
       }
 
       function playDiaryIntro() {
-        const lines = params.hasHistory ? COPY.diaryIntroReturning : COPY.diaryIntroFirstTime;
+        const returningLines = day % 2 === 0 ? COPY.diaryIntroReturningEven : COPY.diaryIntroReturningOdd;
+        const lines = params.hasHistory ? returningLines : COPY.diaryIntroFirstTime;
         // Day2+ 那句提到「抱著日記的我」，蜜柑講這句話時順勢切換成抱日記姿勢，
         // 呼應文字內容；Day1 開場白沒有提到這個動作，維持原本idle姿勢
         if (params.hasHistory) {
@@ -865,9 +1072,11 @@ window.EF.scenes.mainhub = (function () {
         if (!chairPawHotspot.classList.contains('is-available')) return;
         chairPawHotspot.classList.remove('is-available');
 
+        const chairLines = day % 2 === 0 ? COPY.chairPawLinesEven : COPY.chairPawLinesOdd;
+
         function playChairLine(i) {
-          const isLast = i === COPY.chairPawLines.length - 1;
-          showDialogue(COPY.chairPawLines[i], function () {
+          const isLast = i === chairLines.length - 1;
+          showDialogue(chairLines[i], function () {
             const holdMs = isLast ? 500 : 1600;
             const tHold = setTimeout(function () {
               if (isLast) {
@@ -999,7 +1208,7 @@ window.EF.scenes.mainhub = (function () {
         diaryActions.style.display = '';
         diaryInput.disabled = false;
         diaryInput.placeholder = COPY.diaryPlaceholder;
-        diaryInput.focus();
+        if (!isTouchDevice) diaryInput.focus();
       }
       blankConfirmNoBtn.addEventListener('click', onBlankConfirmNo);
       cleanupFns.push(function () { blankConfirmNoBtn.removeEventListener('click', onBlankConfirmNo); });
@@ -1036,10 +1245,13 @@ window.EF.scenes.mainhub = (function () {
       }, 1500);
       cleanupFns.push(function () { clearTimeout(t1); });
 
+      // 回憶對話的逐字速度比一般對話慢約1/3（110→147），讓回憶片段讀起來
+      // 更有分量、更慢，跟其他情境（開場白、深呼吸引導等）的節奏做出區隔
+      const MEMORY_TYPEWRITER_SPEED = 147;
       function playFragment(i) {
         showDialogue(fragments[i], function () {
           dialogueNextEl.classList.add('is-visible');
-        });
+        }, MEMORY_TYPEWRITER_SPEED);
       }
 
       function onDialogueClick() {
@@ -1077,7 +1289,7 @@ window.EF.scenes.mainhub = (function () {
       dialogueEl.addEventListener('click', onDialogueClick);
       cleanupFns.push(function () { dialogueEl.removeEventListener('click', onDialogueClick); });
 
-      const stayLines = COPY.stayLines;
+      const stayLines = day === 1 ? COPY.stayLinesFirstTime : (day % 2 === 0 ? COPY.stayLinesEven : COPY.stayLinesOdd);
       let stayIndex = 0;
 
       function playStayLine(i) {

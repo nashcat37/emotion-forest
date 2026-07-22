@@ -486,6 +486,18 @@ textarea, input {
 .mainhub-scene__dialogue-next.is-visible {
   opacity: 0.7;
 }
+/* post_planting階段的對話框限制最大高度，超過父容器(45%~65%的區域)就內部
+   自己捲動，避免手機橫向畫面下文字換行變多行時，框往上長高蓋住上方的
+   回憶插圖框。隱藏捲軸但保留捲動功能，跟日記回憶雙框用同一套做法 */
+.mainhub-scene__dialogue.is-post-planting .mainhub-scene__dialogue-inner {
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mainhub-scene__dialogue.is-post-planting .mainhub-scene__dialogue-inner::-webkit-scrollbar {
+  display: none;
+}
 @keyframes dialogueNextBounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(4px); }
@@ -1003,6 +1015,132 @@ textarea, input {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.6s ease;
+}
+
+/* 記憶翻牌小遊戲：跟其他overlay（回憶心情雙框、touch diary動畫）同一種
+   「MainHub內部局部overlay」架構，z-index刻意設得比它們都高，避免任何
+   時候被其他前景元素蓋住。手機版overlay本身用inset:0佔滿整個畫布，
+   符合「放大至整個背景那麼大」的需求 */
+.memory-match-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.memory-match-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.memory-match-overlay__dimmer {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 20, 0.88);
+}
+.memory-match-overlay__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2vmin;
+  padding: 3vmin;
+  width: min(92vw, 92vh);
+}
+.memory-match-overlay__status {
+  color: rgba(255, 245, 225, 0.9);
+  font-size: clamp(0.85rem, 2.1vmin, 1.2rem);
+  letter-spacing: 0.06em;
+  text-align: center;
+  min-height: 1.6em;
+}
+.memory-match-overlay__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6vmin;
+  width: min(78vmin, 100%);
+  aspect-ratio: 1 / 1;
+}
+.memory-match-overlay__card {
+  position: relative;
+  cursor: pointer;
+  perspective: 800px;
+}
+.memory-match-overlay__card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.memory-match-overlay__card.is-flipped .memory-match-overlay__card-inner {
+  transform: rotateY(180deg);
+}
+.memory-match-overlay__card-back,
+.memory-match-overlay__card-front {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.memory-match-overlay__card-back {
+  background: linear-gradient(160deg, #3a2e22, #241a12);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  font-size: clamp(1.2rem, 4vmin, 2rem);
+  opacity: 0.7;
+}
+.memory-match-overlay__card-front {
+  background: #fdf8ef;
+  border: 1px solid rgba(255, 220, 150, 0.4);
+  transform: rotateY(180deg);
+  padding: 8%;
+  box-sizing: border-box;
+}
+.memory-match-overlay__card-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.memory-match-overlay__card.is-matched .memory-match-overlay__card-front {
+  box-shadow: 0 0 2.2vmin rgba(255, 230, 180, 0.75), 0 4px 14px rgba(0,0,0,0.4);
+}
+.memory-match-overlay__card.is-matched {
+  cursor: default;
+  pointer-events: none;
+}
+.memory-match-overlay__feedback {
+  color: rgba(255, 235, 190, 0.95);
+  font-size: clamp(0.8rem, 2vmin, 1.1rem);
+  letter-spacing: 0.06em;
+  text-align: center;
+  min-height: 1.6em;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.memory-match-overlay__feedback.is-visible {
+  opacity: 1;
+}
+.memory-match-overlay__close {
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 245, 225, 0.3);
+  background: rgba(255, 245, 225, 0.05);
+  color: rgba(255, 245, 225, 0.75);
+}
+.memory-match-overlay__close:hover {
+  border-color: rgba(255, 245, 225, 0.5);
+  color: rgba(255, 245, 225, 0.95);
 }
 .mainhub-scene__touch-diary-overlay.is-open {
   opacity: 1;

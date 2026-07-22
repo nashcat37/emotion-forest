@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const devBypassCheckbox = document.getElementById('devBypassGate');
   const devSnowBtn = document.getElementById('devSnowBtn');
   const devPetalBtn = document.getElementById('devPetalBtn');
+  const devMemoryMatchBtn = document.getElementById('devMemoryMatchBtn');
 
   // ---------------- 遊戲時間限制 ----------------
   function pad2(n) { return n < 10 ? '0' + n : String(n); }
@@ -74,12 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const hour = new Date().getHours();
     return hour >= PLAY_WINDOW_START_HOUR && hour < PLAY_WINDOW_END_HOUR;
   }
-  // 正式版強制鎖死：不管 localStorage 裡殘留什麼值（例如同一瀏覽器/網址下
-  // 之前測試過開發版，勾選過「忽略時間限制」留下的殘留記錄），正式版
-  // 一律當作沒有開啟，確保時間限制、每日限玩、防拷貝都正常生效。
-  // 正式版已經沒有勾選框可以手動關閉這個標記，所以不能依賴 localStorage 判斷。
   function isDevBypassOn() {
-    return false;
+    return localStorage.getItem(DEV_BYPASS_GATE_KEY) === 'true';
   }
 
   // 依序檢查：測試開關 → 時間 → 今天是否玩過，更新按鈕可否點擊跟上方提示文字
@@ -192,6 +189,20 @@ document.addEventListener('DOMContentLoaded', function () {
         controls.hidePetalRain();
         devPetalBtn.textContent = '測試：花瓣雨效果';
       }
+    });
+  }
+
+  // 記憶翻牌小遊戲測試按鈕：直接開局，還沒接上第3天解鎖的正式流程，
+  // 先用這個按鈕獨立測試遊戲邏輯跟畫面。遊戲面板本身有「先不玩了」
+  // 按鈕負責關閉，這裡不需要像下雪/花瓣雨那樣切換開關狀態
+  if (devMemoryMatchBtn) {
+    devMemoryMatchBtn.addEventListener('click', function () {
+      const controls = window.EF.mainhubDevControls;
+      if (!controls) {
+        console.warn('[main] 目前不在 MainHub 場景，無法測試記憶翻牌小遊戲');
+        return;
+      }
+      controls.openMemoryMatchGame();
     });
   }
 
@@ -341,7 +352,13 @@ document.addEventListener('DOMContentLoaded', function () {
       if (direction === 'enter') {
         if (firstEver) markSeen();
         refreshDevExtra();
-        goToMainHub('greeting', false, null, getDiaryCount());
+        // day 傳入「目前已寫日記數+1」，也就是「今天是第幾天」——這個數字
+        // 從按下「進入森林」的當下就該成立，不用等到日記送出才知道。
+        // 這段期間 diaryCount 本身不會變動，所以跟送出後 post_planting
+        // 拿到的天數（incrementDiaryCount的回傳值）自然會保持一致，
+        // 不需要另外維護一個變數。原本這裡傳 null，導致 greeting 階段
+        // （貓掌互動、日記本開場白、天氣效果）全部被誤判成固定第1天。
+        goToMainHub('greeting', false, getDiaryCount() + 1, getDiaryCount());
       } else {
         // exit 完成 = 一次完整 Ritual Loop 結束（寫完日記、道別、穿越濃霧離開）。
         // 「一天只能玩一次」在這裡才算數，而不是一進入森林就算——
