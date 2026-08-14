@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 開發測試面板開關：true時面板會顯示、所有測試按鈕正常運作；
   // 正式上線前把這裡改成false，面板連同所有測試按鈕的事件綁定都會
   // 整個跳過，不用手動刪除任何程式碼或HTML
-  const IS_DEV_BUILD = true;
+  const IS_DEV_BUILD = false;
 
   // ---------------- 防止一般玩家右鍵拷貝／查看原始碼 ----------------
   // 注意：這只能防住普通玩家的右鍵選單跟常見快捷鍵，屬於基本嚇阻，
