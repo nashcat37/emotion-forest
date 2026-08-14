@@ -23,6 +23,11 @@ html, body {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
+  /* 關閉手機瀏覽器點擊可觸控元素時預設的高亮矩形（淡藍色色塊）。
+     這是瀏覽器內建的觸控回饋UI，不是我們自己畫出來的效果，桌機滑鼠
+     點擊不會觸發所以看不到。一次設在最外層，之後新增任何hotspot／
+     按鈕都會自動套用，不用每個class各自補這行 */
+  -webkit-tap-highlight-color: transparent;
 }
 /* 日記輸入框仍需要正常的文字選取/編輯行為，排除在防拷貝規則之外 */
 textarea, input {
