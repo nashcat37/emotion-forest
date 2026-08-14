@@ -22,6 +22,28 @@ window.EF.GardenManager = (function () {
 
   const PLANT_TYPES = ['grape', 'mimosa', 'sunflower', 'lavender', 'dandelion',  'rose', 'orchid', 'peony', 'camellia'];
 
+  // Day10-18限定：這9天種下的是「兩種既有植物結合成一張圖」的固定配對，
+  // 呼應Emotion Plants設定裡「不同情緒與魔法元素組合可產生特殊突變植物」。
+  // 素材沿用同一批9種花的美術風格，只是多畫一張「兩種花長在一起」的圖，
+  // 檔名沿用同一套規則：assets/images/plants/plant_<key>.png
+  // 固定配對、依天數對應，不從洗牌袋抽，也不會影響一般9種植物的洗牌袋狀態
+  const HIDING_ARC_PLANT_TYPES = [
+    'mimosa_dandelion',   // Day10：怕被觸碰，卻悄悄乘風前行
+    'rose_camellia',      // Day11：帶刺的靠近，藏起來的深情
+    'lavender_grape',     // Day12：靜止的夜，需要時間釀成的勇氣
+    'sunflower_orchid',   // Day13：朝著光，也安靜地守候
+    'mimosa_rose',        // Day14：一碰就縮起，卻仍是美麗的荊棘
+    'dandelion_lavender', // Day15：隨風而去的願望，換來片刻安寧
+    'camellia_peony',     // Day16：凋落也完整，燦爛卻短暫
+    'orchid_grape',       // Day17：耐心等待，彼此牽絆不離
+    'peony_sunflower'     // Day18：重新盛開，朝陽而生的勇氣
+  ];
+
+  function getHidingArcPlantType(day) {
+    const index = Math.min(Math.max(day - 10, 0), HIDING_ARC_PLANT_TYPES.length - 1);
+    return HIDING_ARC_PLANT_TYPES[index];
+  }
+
   // 「放空日」專屬植物：日記完全沒寫任何字、直接送出時種下的固定植物，
   // 不放進上面的隨機池，也不佔用洗牌袋——這不是情緒分析，只是單純的
   // 「有沒有輸入」判斷，跟其他9種一樣不去讀日記內容本身。
@@ -100,6 +122,18 @@ window.EF.GardenManager = (function () {
   // 確保連續幾天不會種到重複的植物，5 種都出現過一輪後才重新洗牌，
   // 依然跟日記內容無關，純粹隨機。
   function plantRandom(day) {
+    // Day10-18固定配對，不從洗牌袋抽——這樣一般9種植物的洗牌袋狀態
+    // 完全不受影響，Day19以後回到隨機池時不會有斷層或重複偏移
+    if (day >= 10 && day <= 18) {
+      const plantType = getHidingArcPlantType(day);
+      const entries = getEntries();
+      entries.push({ day: day, plantType: plantType });
+      while (entries.length > CYCLE_LENGTH) {
+        entries.shift();
+      }
+      saveEntries(entries);
+      return plantType;
+    }
     const plantType = drawPlantType();
     const entries = getEntries();
     entries.push({ day: day, plantType: plantType });
@@ -126,12 +160,18 @@ window.EF.GardenManager = (function () {
 
   // 回傳目前花圃該畫出的所有植株（含版位座標），供 MainHubScene 渲染。
   // 版位由「(day - 1) % CYCLE_LENGTH」決定，同一版位若被多天共用，
-  // 只顯示最後一次種在該版位的植株（新的蓋掉舊的）。
+  // 只顯示最後一次種在該版位的植株（新的蓋掉舊的）。Day10-18例外：
+  // 伴情之花是全新的一個篇章，改用自己的計算基準「(day - 10) %
+  // CYCLE_LENGTH」，從版位0重新開始一輪循環，不延續Day1-9那組
+  // 「(day-1)%8」算出來的錯位版位——這樣Day10種下去就是蓋掉版位0，
+  // 不是接續Day1-9那套公式算出來的版位1
   function getGardenLayout() {
     const entries = getEntries();
     const bySlot = {};
     entries.forEach(function (entry) {
-      const slotIndex = (entry.day - 1) % CYCLE_LENGTH;
+      const slotIndex = (entry.day >= 10 && entry.day <= 18)
+        ? (entry.day - 10) % CYCLE_LENGTH
+        : (entry.day - 1) % CYCLE_LENGTH;
       bySlot[slotIndex] = entry; // 同版位新資料自然覆蓋舊資料
     });
 

@@ -214,6 +214,163 @@ textarea, input {
 }
 .end-gate__btn:hover { background: rgba(255, 220, 150, 0.28); }
 
+/* 「離開森林」跟「遊玩回饋」用比原本end-gate的28px更緊湊的間距分組，
+   讓兩顆按鈕視覺上是一組「行動選項」 */
+.end-gate__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+/* 按下「離開森林」後（is-closed），連同回饋按鈕一起淡出收掉，
+   避免玩家在「今天已結束」的畫面又點出回饋框 */
+.end-gate.is-closed .end-gate__actions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+
+/* ============================================================
+   遊玩回饋（Feedback）－ 共用元件
+   start-gate跟end-gate各自只放一顆入口按鈕(.gate-feedback-btn)，
+   兩邊都是開啟同一個.feedback-overlay，樣式跟開關邏輯只維護一份，
+   見main.js的openFeedbackPanel/closeFeedbackPanel
+   ============================================================ */
+/* 「遊玩回饋」刻意做成接近純文字連結的低調樣式：不用實色底、不用邊框，
+   跟「離開森林」「進入森林」這類實體按鈕做出明確層級區隔，讓玩家一眼
+   能分辨「這是意見箱，不是世界觀的一部分」 */
+.gate-feedback-btn {
+  padding: 4px 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 245, 225, 0.5);
+  font-size: clamp(0.72rem, 1.6vmin, 0.9rem);
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.gate-feedback-btn:hover { color: rgba(255, 245, 225, 0.85); }
+
+/* 回饋面板：獨立疊層蓋在start-gate／end-gate之上（z-index高於兩者的500，
+   低於dev-panel的1000），寫法比照diary-overlay的dimmer+panel模式，
+   不需要跟底下的gate互相知道對方的狀態 */
+.feedback-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.feedback-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.feedback-overlay__dimmer {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 20, 0.72);
+}
+.feedback-overlay__panel {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 86vw);
+  background: linear-gradient(160deg, #3a2e22, #241a12);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 10px;
+  padding: clamp(18px, 3vmin, 28px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.feedback-overlay__form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+/* 送出當下先加這個class：只讓透明度往下淡，刻意不同時改position，
+   避免opacity動畫還沒跑完，版面就先把它踢出flow，看起來像瞬間消失 */
+.feedback-overlay__form.is-fading-out {
+  opacity: 0;
+  pointer-events: none;
+}
+/* 等上面的0.5秒淡出動畫真正跑完（由main.js排程時間追加），此時畫面上
+   已經完全透明看不到了，才追加這個class讓它徹底脫離flow，
+   把版面空間讓給感謝文字 */
+.feedback-overlay__form.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+.feedback-overlay__input {
+  width: 100%;
+  min-height: 110px;
+  resize: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 220, 150, 0.35);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: rgba(255, 245, 225, 0.95);
+  font-size: clamp(0.85rem, 2vmin, 1.05rem);
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+}
+.feedback-overlay__input::placeholder {
+  color: rgba(255, 245, 225, 0.4);
+}
+.feedback-overlay__input:disabled {
+  opacity: 0.6;
+}
+.feedback-overlay__actions {
+  display: flex;
+  gap: 16px;
+}
+.feedback-overlay__actions button {
+  padding: 10px 26px;
+  border-radius: 999px;
+  font-size: clamp(0.8rem, 2vmin, 1rem);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.feedback-overlay__submit {
+  background: rgba(255, 220, 150, 0.15);
+  border: 1px solid rgba(255, 220, 150, 0.5);
+  color: rgba(255, 245, 225, 0.95);
+}
+.feedback-overlay__submit:hover { background: rgba(255, 220, 150, 0.28); }
+.feedback-overlay__cancel {
+  background: none;
+  border: 1px solid rgba(255, 245, 225, 0.25);
+  color: rgba(255, 245, 225, 0.7);
+}
+.feedback-overlay__cancel:hover { color: rgba(255, 245, 225, 0.95); }
+/* 送出成功後的感謝字樣：跟表單本身共用同一個.feedback-overlay__panel容器，
+   靠opacity交叉淡入淡出，不佔用額外版面高度跳動 */
+.feedback-overlay__ack {
+  color: rgba(255, 245, 225, 0.9);
+  font-size: clamp(0.85rem, 2vmin, 1.05rem);
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 0.4s ease;
+}
+.feedback-overlay__ack.is-visible {
+  opacity: 1;
+  position: static;
+}
+
 /* ============================================================
    開發測試面板（正式上線前整個移除，不屬於任何 Scene 的正式規格）
    ============================================================ */
@@ -408,11 +565,152 @@ textarea, input {
   z-index: 1;
   transition: background-image 0.1s;
 }
+
+/* 瀏覽模式(晝夜分明機制)18:00前的狀態：不是真的白天，森林設定上永遠是
+   夜晚，這裡呈現的是「還沒到守夜燈完全亮起、濃霧尚未散去」的格外濃厚
+   夜間濃霧感，暗示還沒到寫日記的時間。
+   直接沿用FogScene既有的fog_layer_a/b素材（黑底+白色霧絲），搭配
+   mix-blend-mode:screen——黑色部分自動變透明，只有霧絲疊加發光，
+   不會蓋住scene002_mainhub_bg背景。
+   實測3層+各層opacity:1疊加太亮，畫面幾乎全白蓋掉蜜柑跟場景，改成
+   2層（拿掉mid）並各自降低目標透明度：
+   --far  遠景：涵蓋整體（跟FogScene用法一致），z-index在花圃/蜜柑之下，
+          目標透明度0.35
+   --near 近景：往下偏移，蓋住木屋前平台（花圃、蜜柑都在內），
+          layer_a水平鏡射做出跟far的差異，z-index蓋過花圃/蜜柑，
+          目標透明度0.45；另外用mask在離開熱區(左下角)那個角落挖一塊
+          淡淡的透亮範圍，避免熱區被完全蓋住看不見——效果像月光剛好
+          從那個方向透進來，不是憑空冒出一個發光按鈕
+   動畫只動transform（左右飄移），刻意不疊加opacity呼吸感，因為淡入
+   淡出是外層is-visible的opacity transition控制，兩者會互相打架 */
+.mainhub-scene__daytime-fog-group {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mainhub-scene__daytime-fog {
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 130%;
+  height: 130%;
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+  will-change: transform, opacity;
+}
+.mainhub-scene__daytime-fog--far {
+  z-index: 1;
+  top: -45%; /* 往上偏移，讓遠景霧氣涵蓋到湖泊上方、星空與月亮那一帶 */
+  background-image: url('../assets/images/scene001_fog/scene001_fog_layer_a.png');
+  animation: daytimeFogDriftFar 30s ease-in-out infinite alternate;
+}
+.mainhub-scene__daytime-fog-group.is-visible .mainhub-scene__daytime-fog--far {
+  opacity: 0.35;
+}
+.mainhub-scene__daytime-fog--near {
+  /* 蓋過花圃(2)跟蜜柑(2)，讓近景也籠罩在濃霧中 */
+  z-index: 3;
+  top: 20%; /* 往下偏移，霧絲集中在木屋前平台 */
+  background-image: url('../assets/images/scene001_fog/scene001_fog_layer_a.png');
+  animation: daytimeFogDriftNear 24s ease-in-out infinite alternate;
+  /* 離開熱區在左下角(left:2% top:85%)，那個角落挖一塊淡淡的透亮範圍，
+     避免熱區被完全蓋住；換算成相對於這個放大130%的容器本身的座標 */
+  -webkit-mask-image: radial-gradient(circle 20% at 12% 82%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,1) 85%);
+  mask-image: radial-gradient(circle 20% at 12% 82%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,1) 85%);
+}
+.mainhub-scene__daytime-fog-group.is-visible .mainhub-scene__daytime-fog--near {
+  opacity: 0.45;
+}
+@keyframes daytimeFogDriftFar {
+  0% { transform: translateX(-1.5%); }
+  100% { transform: translateX(1.5%); }
+}
+@keyframes daytimeFogDriftNear {
+  /* scaleX(-1) 水平鏡射：跟--far用同一張圖，但畫面不會一樣 */
+  0% { transform: scaleX(-1) translateX(-1%); }
+  100% { transform: scaleX(-1) translateX(1%); }
+}
 /* 蜜柑抱著日記本時，桌上不該再有一本，切換成沒有日記本的背景圖版本。
    需要 Nash 額外提供 scene002_mainhub_bg1.png（內容完全相同，只差小圓桌
    上沒有日記本），放進同一個資料夾就會自動生效，還沒放之前不會有視覺變化。 */
 .mainhub-scene__bg.is-diary-hidden {
   background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg1.png');
+}
+/* Day10-18限定：蜜柑躲在小屋裡，搖椅空著，窗戶透出若隱若現的身影，
+   桌上維持有日記本的版本（這段期間日記照常使用，不是is-diary-hidden那組） */
+.mainhub-scene__bg.is-hiding {
+  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg_hiding.png');
+}
+
+/* Day10限定：點日記本熱區第一次看到的畫面，紙條圖當作背景插圖，
+   蜜柑寫的內容改用一般對話框呈現、疊在插圖上面（所以z-index要比
+   .mainhub-scene__dialogue(5)低）；純粹當背景用，不接收點擊，
+   點擊播放靠的是dialogueEl本身的click-to-advance */
+.mainhub-scene__note-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 5, 12, 0.75);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.mainhub-scene__note-overlay.is-visible {
+  opacity: 1;
+}
+.mainhub-scene__note-img {
+  max-width: 60%;
+  max-height: 70%;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
+}
+
+/* Day10-18限定：貓掌搖椅座位上的微光小物熱區，座標是從Nash標記的實際
+   截圖用像素分析算出來的（left:31.98% top:61.33%），這裡四邊留一點
+   padding方便點擊。用有形狀的螢火蟲剪影（inline SVG）而不是單純光暈，
+   搭配輕微的漂浮動畫，比純光暈更明確可點 */
+.mainhub-scene__chair-item-hotspot {
+  position: absolute;
+  left: 28%;
+  top: 57%;
+  width: 4%;
+  height: 4%;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  z-index: 3;
+}
+.mainhub-scene__chair-item-hotspot.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mainhub-scene__chair-item-firefly {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* 沿用貓掌熱區飛向日記本那顆光球同一套視覺語言(radial-gradient +
+     box-shadow柔邊發光)，不是SVG形狀，維持整個遊戲的發光效果統一 */
+  background: radial-gradient(circle, rgba(255, 250, 220, 0.95) 0%, rgba(255, 235, 180, 0.5) 55%, rgba(255, 235, 180, 0) 100%);
+  box-shadow: 0 0 12px 4px rgba(255, 235, 180, 0.6);
+  animation: chairItemFireflyFloat 3.5s ease-in-out infinite, chairItemFireflyPulse 1.8s ease-in-out infinite;
+}
+@keyframes chairItemFireflyPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes chairItemFireflyFloat {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(15%, -25%); }
+  50% { transform: translate(-10%, -12%); }
+  75% { transform: translate(10%, 8%); }
 }
 
 .mainhub-scene__mikan {
@@ -423,6 +721,25 @@ textarea, input {
   width: 16%;
   height: auto;
   pointer-events: none;
+}
+
+/* 蜜柑生活足跡：Day 2/5/8 花園、3/6/9 湖邊、4/7/10 門口（之後3天一輪循環），
+   進場時蜜柑不在搖椅上，改用以下座標覆蓋預設位置；交給蜜柑後回到搖椅時
+   會是全新mount（沒有這幾個class），自動用回上面的預設搖椅座標。
+   座標依 scene002_mainhub_bg-mark.png 的標記點換算（標記=蜜柑圖片視覺中心，
+   已扣掉半個寬/高，寬度統一跟idle一樣16%，不再各自覆蓋） */
+.mainhub-scene__mikan.is-activity-gardening {
+  left: 33%;
+  top: 66%;
+}
+.mainhub-scene__mikan.is-activity-fishing {
+  left: 56.1%;
+  top: 28%;
+  width: 18%;
+}
+.mainhub-scene__mikan.is-activity-sweeping {
+  left: 4.3%;
+  top: 44.9%;
 }
 
 .mainhub-scene__dialogue {
@@ -453,6 +770,24 @@ textarea, input {
 .mainhub-scene__dialogue.is-post-planting {
   top: 45%;
   bottom: 35%;
+}
+/* Day10-18黑暗獨白限定：畫面裡沒有小圓桌等場景物件會被擋住，對話框
+   移到跟蜜柑同水平、水平置中，比一般對話框稍微低一點 */
+.mainhub-scene__dialogue.is-hiding-memory {
+  left: 50%;
+  top: 47%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+/* Day10-18限定：蜜柑隔著門的OS對話，位置在窗戶上方往右延伸到湖泊，
+   不是平常置中的位置，所以要拿掉置中用的transform跟left:50% */
+.mainhub-scene__dialogue.is-hiding-os {
+  left: 30%;
+  top: 15%;
+  bottom: auto;
+  transform: none;
+  max-width: 45%;
+  align-items: flex-start;
 }
 .mainhub-scene__dialogue-inner {
   display: inline-flex;
@@ -636,6 +971,22 @@ textarea, input {
   object-fit: cover;
   display: block;
 }
+/* Day10-18限定：同一批memory_day01~09素材，用色調+暗角讓它感覺不一樣——
+   呼應「這次看懂了它的重量」，播放速度也會在JS那邊調慢(playbackRate)，
+   平常Day1-8的回憶播放完全不受影響（沒有這個class就不會套用） */
+.mainhub-scene__memory-video.is-hiding-tone {
+  filter: grayscale(0.55) contrast(1.12) brightness(0.8) saturate(0.55);
+}
+.mainhub-scene__memory-frame.is-hiding-tone {
+  position: relative;
+}
+.mainhub-scene__memory-frame.is-hiding-tone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
+}
 
 /* 異常天氣：下雪。z-index刻意設得比聚光燈遮罩(z-index:2)更高，這樣即使
    回憶場景把背景暗下去，飄落的雪花依然看得到，不會被遮罩整片蓋住——
@@ -732,6 +1083,11 @@ textarea, input {
 .mainhub-scene__memory-spotlight-fill {
   fill: rgba(3, 5, 12, 0.82);
 }
+/* Day9道別揭露專用：需要真正的全黑，不是回憶模式那種「變暗但隱約看得到」
+   的柔光效果，兩者需求不同，用modifier class區分，不動原本的0.82 */
+.mainhub-scene__memory-spotlight.is-fully-black .mainhub-scene__memory-spotlight-fill {
+  fill: rgba(3, 5, 12, 1);
+}
 
 /* 回憶播放期間的柔光效果：蜜柑、回憶框、對話框疊加一層淡淡的光暈，
    凸顯視覺焦點在牠們身上，跟聚光燈遮罩共用差不多的淡入淡出節奏 */
@@ -791,6 +1147,12 @@ textarea, input {
   width: 18%;
   height: 27%;
 }
+/* 蜜柑生活足跡活動日：蜜柑人不在椅子上時，這個熱區暫時不顯示手掌游標，
+   點日記本熱區、蜜柑淡入回到椅子後會拿掉這個class */
+.mainhub-scene__egg--mikan.is-inactive {
+  cursor: default;
+  pointer-events: none;
+}
 
 /* 木門彩蛋：座標是從Nash標記的實際截圖用像素分析算出來的
    （紅圈範圍 left:6.91% top:23.85% width:10.70% height:17.50%），
@@ -825,6 +1187,15 @@ textarea, input {
   0% { opacity: 0; transform: scale(0.8); }
   30% { opacity: 1; transform: scale(1.3); }
   100% { opacity: 0; transform: scale(1.6); }
+}
+/* 守夜燈規律閃爍：第3天解鎖記憶翻牌小遊戲的劇本專用，一閃一閃持續1.5秒，
+   跟is-pulsing(單次脈動放大消失)是不同效果，這個是規律的亮暗交替 */
+.mainhub-scene__lamp-glow.is-blinking {
+  animation: lampGlowBlink 0.3s ease-in-out infinite;
+}
+@keyframes lampGlowBlink {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.9; }
 }
 
 /* 開場揭幕黑幕：圓心對齊守夜燈位置(39.5%, 32%)，一開始只有燈那圈透光，
@@ -915,6 +1286,9 @@ textarea, input {
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
+.diary-overlay__input-wrap {
+  position: relative;
+}
 .diary-overlay__input {
   width: 100%;
   min-height: 120px;
@@ -925,9 +1299,33 @@ textarea, input {
   font-size: clamp(0.8rem, 2vmin, 1.2rem);
   font-family: inherit;
   padding: 12px;
+  padding-right: 40px; /* 幫燈泡按鈕留空間，避免文字打到按鈕底下 */
   resize: none;
   letter-spacing: 0.05em;
   line-height: 1.6;
+  box-sizing: border-box;
+}
+.diary-overlay__inspiration-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 220, 150, 0.35);
+  background: rgba(255, 220, 150, 0.1);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+.diary-overlay__inspiration-btn:hover {
+  opacity: 1;
+  background: rgba(255, 220, 150, 0.22);
 }
 .diary-overlay__input::placeholder {
   color: rgba(255, 245, 225, 0.4);
@@ -1051,6 +1449,57 @@ textarea, input {
   padding: 3vmin;
   width: min(92vw, 92vh);
 }
+/* 開局前的規則說明：預設隱藏，openMemoryMatchGame()一開始就會顯示這個，
+   按下「開始」才切到實際牌局畫面（grid本身在按下開始前是display:none） */
+.memory-match-overlay__intro {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.4vmin;
+  text-align: center;
+  max-width: 70vmin;
+}
+.memory-match-overlay__intro.is-visible {
+  display: flex;
+}
+.memory-match-overlay__intro-text {
+  margin: 0;
+  color: rgba(255, 245, 225, 0.9);
+  font-size: clamp(0.85rem, 2.1vmin, 1.15rem);
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+}
+.memory-match-overlay__start {
+  padding: 10px 30px;
+  background: rgba(255, 220, 150, 0.18);
+  border: 1px solid rgba(255, 220, 150, 0.5);
+  color: rgba(255, 245, 225, 0.95);
+  border-radius: 999px;
+  font-size: clamp(0.8rem, 2vmin, 1.15rem);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.memory-match-overlay__start:hover {
+  background: rgba(255, 220, 150, 0.3);
+}
+/* 規則畫面的「先不玩了」：直接跟在「開始」下方，用margin-top拉出
+   適當距離（不緊鄰，但也不會像原本那樣被中間空的狀態/回饋區塊
+   拉得很遠）。風格比「開始」低調，是次要選項 */
+.memory-match-overlay__intro-close {
+  margin-top: 1.6vmin;
+  padding: 7px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 245, 225, 0.25);
+  color: rgba(255, 245, 225, 0.6);
+  border-radius: 999px;
+  font-size: clamp(0.7rem, 1.7vmin, 1rem);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.memory-match-overlay__intro-close:hover {
+  border-color: rgba(255, 245, 225, 0.45);
+  color: rgba(255, 245, 225, 0.85);
+}
 .memory-match-overlay__status {
   color: rgba(255, 245, 225, 0.9);
   font-size: clamp(0.85rem, 2.1vmin, 1.2rem);
@@ -1092,10 +1541,14 @@ textarea, input {
   box-shadow: 0 4px 14px rgba(0,0,0,0.4);
 }
 .memory-match-overlay__card-back {
-  background: linear-gradient(160deg, #3a2e22, #241a12);
+  background: #1a1410;
   border: 1px solid rgba(255, 220, 150, 0.25);
-  font-size: clamp(1.2rem, 4vmin, 2rem);
-  opacity: 0.7;
+  overflow: hidden;
+}
+.memory-match-overlay__card-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .memory-match-overlay__card-front {
   background: #fdf8ef;
@@ -1141,6 +1594,53 @@ textarea, input {
 .memory-match-overlay__close:hover {
   border-color: rgba(255, 245, 225, 0.5);
   color: rgba(255, 245, 225, 0.95);
+}
+
+/* 全破慶祝效果：溫暖金色光暈閃過整個overlay + 一圈星光粒子從中心向外
+   綻放後淡出。刻意走「柔光綻放」而不是誇張的紙屑爆炸，風格延續整個
+   作品既有的柔光語言（守夜燈光暈、回憶聚光燈、飛向日記本的光球） */
+.memory-match-overlay__celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+}
+.memory-match-overlay__celebration.is-active {
+  opacity: 1;
+  animation: memoryMatchCelebrationFade 2.4s ease-out forwards;
+}
+@keyframes memoryMatchCelebrationFade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.memory-match-overlay__celebration-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 235, 190, 0.55) 0%, rgba(255, 220, 150, 0.15) 40%, rgba(255, 220, 150, 0) 70%);
+}
+.memory-match-overlay__celebration-sparks {
+  position: absolute;
+  inset: 0;
+}
+.memory-match-overlay__spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.7vmin;
+  height: 0.7vmin;
+  margin: -0.35vmin 0 0 -0.35vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 250, 220, 0.95) 0%, rgba(255, 230, 180, 0.6) 60%, rgba(255, 230, 180, 0) 100%);
+  box-shadow: 0 0 6px 2px rgba(255, 230, 180, 0.5);
+  animation: memoryMatchSparkFly 1.8s ease-out forwards;
+}
+@keyframes memoryMatchSparkFly {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--spark-tx), var(--spark-ty)) scale(1); opacity: 0; }
 }
 .mainhub-scene__touch-diary-overlay.is-open {
   opacity: 1;

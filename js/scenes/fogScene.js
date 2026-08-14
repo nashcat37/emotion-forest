@@ -31,7 +31,7 @@ window.EF.scenes.fog = (function () {
     if (direction === 'enter' && isFirstEver) {
       mountCinematic(container, onComplete);
     } else {
-      mountInteractive(container, onComplete, direction);
+      mountInteractive(container, onComplete, direction, params.durationMs);
     }
   }
 
@@ -77,7 +77,10 @@ window.EF.scenes.fog = (function () {
   };
 
   // ---------------- Interactive Fog（每天日常穿越）----------------
-  function mountInteractive(container, onComplete, direction) {
+  // durationMs：自動散霧的等待時間，不傳就用預設的EXIT_TIME_MS(9秒)。
+  // 瀏覽模式進場會傳入5000（5秒），讓「無動畫的二次進場」風格但更快帶過
+  function mountInteractive(container, onComplete, direction, durationMs) {
+    const exitTimeMs = durationMs || EXIT_TIME_MS;
     const scene = document.createElement('div');
     scene.className = 'fog-scene';
     const dialogueText = FOG_DIALOGUE[direction] || FOG_DIALOGUE.exit;
@@ -148,7 +151,7 @@ window.EF.scenes.fog = (function () {
     function tick() {
       if (!completed) {
         const elapsed = performance.now() - startTime;
-        if (elapsed >= EXIT_TIME_MS) {
+        if (elapsed >= exitTimeMs) {
           triggerDissipate();
         }
       }

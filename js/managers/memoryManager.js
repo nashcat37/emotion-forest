@@ -107,9 +107,102 @@ window.EF.MemoryManager = (function () {
     return Math.min(day, memoryFragments.length);
   }
 
+  // Day10-18限定：蜜柑找回記憶後太自責、太害怕躲起來，這9天的回憶是把
+  // Day1-8＋Day9循環那份「異常天氣」重新詮釋一次，揭露詛咒與愧疚的真相。
+  // 素材沿用同一批memory_day01~09（Day10對應01，以此類推），不需要新圖/新片
+  const hidingArcMemoryFragments = [
+    [ // Day10 → 對應Day1：失去過去
+      '喵…關於我為什麼忘記了自己……',
+      '那天我看著主人，直到他整個人，都變得好淡好淡……',
+      '像要，消失在濃霧裡一樣。',
+      '我好害怕，害怕到....想把那段記憶藏起來。',
+      '於是，我把這些害怕、不安，全都埋入花圃裡。',
+      '原來不是忘記了，是我，不敢想起來喵……'
+    ],
+    [ // Day11 → 對應Day2：兩張搖椅
+      '那兩張搖椅……喵，我還記得更多了。',
+      '左邊那張，主人常常抱著我，一起看星星。',
+      '後來，我再也不敢坐上去。',
+      '怕一坐下，就會又想起，他離開時的樣子。'
+    ],
+    [ // Day12 → 對應Day3：森林永遠停留在夜晚
+      '靜止的夜晚……其實，還有另一個原因喵。',
+      '主人說，時間慢一點，他才能，多一點機會。',
+      '去找到，能救我的魔法。',
+      '他把好多好多的力氣，都留在了這片夜色裡。'
+    ],
+    [ // Day13 → 對應Day4：守夜燈的意義
+      '守夜燈……喵，其實也是我點的。',
+      '不是主人一個人留下的。',
+      '是我，每天晚上，偷偷幫忙添一點光。',
+      '因為我想，如果他回來的那天，森林是暗的……',
+      '他會不會，覺得沒有人在等他了。'
+    ],
+    [ // Day14 → 對應Day5：魔法師離開的那天（最重的一天）
+      '他離開那天……喵，我一直沒說完。',
+      '我以為，是我讓他，變得那麼虛弱。',
+      '所以他才，非走不可。',
+      '都是我……如果我沒有出現就好了。'
+    ],
+    [ // Day15 → 對應Day6：魔法日記與情緒種子（第一次點到詛咒）
+      '這本日記……喵，我現在想起來了，主人為什麼要留下它。',
+      '他說，我聽得懂話，卻，讀不懂心情。',
+      '所以他留了魔法，讓情緒可以，變成看得見的樣子。',
+      '這樣，我才能，稍微陪你久一點喵。'
+    ],
+    [ // Day16 → 對應Day7：花園與湖畔的音樂
+      '那首旋律……喵，我想起最後一次聽到，是哪一天了。',
+      '就是他，最後一次，笑著看我的那天。',
+      '後來他的笑容，就慢慢，變得好累好累。',
+      '我還是很想再聽一次，那首歌喵……'
+    ],
+    [ // Day17 → 對應Day8：濃霧邊界與世界等待重新開始
+      '濃霧一直都在等待……喵，我終於知道，在等什麼了。',
+      '是在等主人回來。',
+      '也在等，我敢，抬起頭看你的那一天。'
+    ],
+    [ // Day18 → 對應Day9循環：異常天氣/魔法偶爾溢出，鋪陳Day19的伏筆
+      '喵……那些偶爾飄起的雪，或花瓣雨。',
+      '我現在覺得，那可能是，主人還沒放棄的意思。',
+      '他的魔法還在，努力著什麼喵。',
+      '那我，是不是也可以，試著努力看看呢……'
+    ]
+  ];
+
+  function getHidingArcMemoryForDay(day) {
+    const index = Math.min(Math.max(day - 10, 0), hidingArcMemoryFragments.length - 1);
+    return hidingArcMemoryFragments[index];
+  }
+
+  // 素材沿用memory_day01~09，Day10對應01、Day18對應09
+  function getHidingArcMemoryImageDay(day) {
+    return Math.min(Math.max(day - 9, 1), hidingArcMemoryFragments.length);
+  }
+
+  // 「回憶心情」介面用的標題，跟hidingArcMemoryFragments一一對應
+  const hidingArcMemoryTitles = [
+    '原來，是我不敢想起來',
+    '那兩張搖椅，我不敢再坐',
+    '靜止的夜，還有另一個原因',
+    '守夜燈，也是我點的',
+    '都是我的錯，如果我沒有出現',
+    '他留下日記，是因為我聽不懂心情',
+    '最後一次，聽他的笑聲',
+    '濃霧在等，我敢抬頭的那一天',
+    '他的魔法，好像還沒放棄'
+  ];
+
+  function getHidingArcMemoryTitleForDay(day) {
+    const index = Math.min(Math.max(day - 10, 0), hidingArcMemoryTitles.length - 1);
+    return hidingArcMemoryTitles[index];
+  }
+
   return {
     getMemoryForDay: getMemoryForDay,
     getMemoryTitleForDay: getMemoryTitleForDay,
-    getMemoryImageDay: getMemoryImageDay
+    getMemoryImageDay: getMemoryImageDay,
+    getHidingArcMemoryForDay: getHidingArcMemoryForDay,
+    getHidingArcMemoryImageDay: getHidingArcMemoryImageDay,
+    getHidingArcMemoryTitleForDay: getHidingArcMemoryTitleForDay
   };
 })();

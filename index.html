@@ -41,6 +41,10 @@
          不會出現點了沒反應的按鈕）。只放在啟動門檻，進入森林後不再出現，
          避免干擾Ritual的沉浸感 -->
     <button class="start-gate__fullscreen-btn" id="fullscreenBtn" style="display:none;">⛶ 全螢幕</button>
+    <!-- 遊玩回饋入口之一：不分正式Ritual／瀏覽模式，只要玩家看得到
+         start-gate（第一次開啟、或瀏覽模式離開後回到這裡）就能給意見。
+         跟end-gate的同名按鈕共用同一個feedback-overlay面板，見main.js -->
+    <button class="gate-feedback-btn" id="feedbackBtnStart">遊玩回饋</button>
   </div>
 
   <!-- 結尾畫面：Fog exit 播完後顯示，架構完全比照 start-gate。
@@ -48,20 +52,48 @@
        讓玩家清楚知道今天的 Ritual 已經結束，不會停在一片濃霧不知所措 -->
   <div class="end-gate" id="endGate">
     <div class="end-gate__text">今晚的故事先說到這，<br>守夜燈會一直亮著、等你回來。</div>
-    <button class="end-gate__btn" id="endBtn">離開森林</button>
+    <div class="end-gate__actions">
+      <button class="end-gate__btn" id="endBtn">離開森林</button>
+      <!-- 遊玩回饋入口之二，跟start-gate的按鈕開啟同一個feedback-overlay -->
+      <button class="gate-feedback-btn" id="feedbackBtnEnd">遊玩回饋</button>
+    </div>
   </div>
 
-  <!-- 開發測試面板，正式上線前會整個移除 -->
-  <div class="dev-panel" id="devPanel">
+  <!-- 遊玩回饋面板：獨立於start-gate／end-gate之外的共用元件，兩邊的
+       「遊玩回饋」按鈕都是開啟同一份。內容透過main.js送往Google表單
+       (formResponse)，同時備份一份到localStorage，避免玩家裝置離線
+       或表單請求失敗時回饋內容憑空消失 -->
+  <div class="feedback-overlay" id="feedbackOverlay">
+    <div class="feedback-overlay__dimmer"></div>
+    <div class="feedback-overlay__panel">
+      <div class="feedback-overlay__form" id="feedbackForm">
+        <textarea class="feedback-overlay__input" id="feedbackInput" placeholder="想跟我們說的話，都可以寫在這裡..."></textarea>
+        <div class="feedback-overlay__actions">
+          <button class="feedback-overlay__submit" id="feedbackSubmitBtn">送出</button>
+          <button class="feedback-overlay__cancel" id="feedbackCancelBtn">取消</button>
+        </div>
+      </div>
+      <div class="feedback-overlay__ack" id="feedbackAck">收到了~謝謝你的回饋</div>
+    </div>
+  </div>
+
+  <!-- 開發測試面板：預設用display:none藏起來，實際顯示與否由main.js
+       的IS_DEV_BUILD開關決定，正式上線前把main.js那個常數改成false即可 -->
+  <div class="dev-panel" id="devPanel" style="display:none;">
     <div>state: <span class="dev-panel__state" id="devState">-</span></div>
     <div id="devExtra"></div>
     <button id="devResetBtn">重置 isFirstEver</button>
+    <div class="dev-panel__checkbox">
+      跳到第 <input type="number" id="devJumpDayInput" min="1" max="999" style="width:40px" /> 天
+      <button id="devJumpDayBtn">跳轉</button>
+    </div>
     <label class="dev-panel__checkbox">
       <input type="checkbox" id="devBypassGate" /> 測試用：忽略時間限制
     </label>
     <button id="devSnowBtn">測試：下雪效果</button>
     <button id="devPetalBtn">測試：花瓣雨效果</button>
     <button id="devMemoryMatchBtn">測試：記憶翻牌小遊戲</button>
+    <button id="devFogBtn">測試：18:00前濃霧</button>
   </div>
 
   <!-- 共用工具 -->
