@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 開發測試面板開關：true時面板會顯示、所有測試按鈕正常運作；
   // 正式上線前把這裡改成false，面板連同所有測試按鈕的事件綁定都會
   // 整個跳過，不用手動刪除任何程式碼或HTML
-  const IS_DEV_BUILD = false;
+  const IS_DEV_BUILD = true;
 
   // ---------------- 防止一般玩家右鍵拷貝／查看原始碼 ----------------
   // 注意：這只能防住普通玩家的右鍵選單跟常見快捷鍵，屬於基本嚇阻，
@@ -306,7 +306,29 @@ document.addEventListener('DOMContentLoaded', function () {
       fadeTimers.set(audio, timer);
     }
 
+    function unlockAll() {
+      // 在玩家「進入森林」這個明確手勢的當下，把三軌音樂都假播放一次立刻
+      // 暫停（音量本來就是0，玩家聽不到任何聲音），藉此跟手機瀏覽器預先
+      // 登記這幾個音訊元素已經被這次手勢授權過。background.mp3實際要用到
+      // 的時機（switchToBackgroundMusic）通常隔了好幾個步驟才會發生，
+      // 屆時已經離手勢太遠，手機瀏覽器的自動播放政策會直接擋下第一次
+      // 播放、且不會有明顯錯誤畫面，只在console留下warning——桌面版政策
+      // 寬鬆很多，不會遇到這個問題，這也是為什麼手機版才看得到這個bug
+      [nightAmbience, softWind, backgroundMusic].forEach(function (a) {
+        const p = a.play();
+        if (p && typeof p.catch === 'function') {
+          p.then(function () {
+            a.pause();
+            a.currentTime = 0;
+          }).catch(function (err) {
+            console.warn('[AudioManager] 解鎖音軌失敗：', err);
+          });
+        }
+      });
+    }
+
     return {
+      unlockAll: unlockAll,
       playSoftWind: function () { fadeTo(softWind, TARGET_VOLUME.softWind); },
       stopSoftWind: function () { fadeTo(softWind, 0); },
 
@@ -399,6 +421,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   startBtn.addEventListener('click', function () {
     startGate.classList.add('hidden');
+    // 必須在這個click handler裡同步呼叫（不能包在setTimeout或then()裡才
+    // 呼叫），手機瀏覽器才會認定這是使用者手勢觸發的播放請求
+    AudioManager.unlockAll();
     beginExperience();
   });
 

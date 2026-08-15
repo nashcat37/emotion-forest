@@ -718,13 +718,14 @@ window.EF.scenes.mainhub = (function () {
 
 
     // ---------------- 對話文字（打字機效果） ----------------
-    // 只有is-post-planting階段的對話框有overflow-y:auto（見style.css），
-    // 用來避開回憶影片框、手機直向畫面下長句子可能需要內部捲動才看得完。
-    // 這裡的偵測邏輯放在showDialogue()這個唯一共用入口，不用去每個呼叫點
-    // (打招呼/種下種子後/Day10-18躲藏對話...等十幾處)個別加
+    // 捲動提示只要在「回憶影片正在播放」這個當下才出現，用memoryFrame自己
+    // 的is-visible class來判斷最精準——is-post-planting這個class雖然也
+    // 掛在dialogueEl上，但它是mount()一開始判斷「今天不是從打招呼開始
+    // 恢復」就會加上去、之後整個session都不會拿掉，不是只在播影片時才有，
+    // 拿來當開關會太寬鬆，導致提示在不相關的對話框也跑出來
     const SCROLL_HINT_SEEN_KEY = 'ef_seenDialogueScrollHint';
     function checkDialogueOverflow() {
-      if (!dialogueEl.classList.contains('is-post-planting')) return;
+      if (!memoryFrame.classList.contains('is-visible')) return;
       // +1避免子像素捲動高度計算的浮點誤差誤判成有溢出
       const isOverflowing = dialogueInnerEl.scrollHeight > dialogueInnerEl.clientHeight + 1;
       dialogueInnerEl.classList.toggle('has-overflow', isOverflowing);
