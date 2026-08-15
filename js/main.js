@@ -359,6 +359,40 @@ document.addEventListener('DOMContentLoaded', function () {
   window.EF = window.EF || {};
   window.EF.AudioManager = AudioManager;
 
+  // ---------------- Seed Planting 影片：預先建立＋解鎖 ----------------
+  // iOS Safari對<video>自動播放的手勢認定比<audio>更嚴格：seedPlantingScene.js
+  // 原本每天都用document.createElement重新建立一個全新的<video>，等於每次都
+  // 重新歸零「這個元素有沒有被使用者手勢授權過」的狀態，導致中間隔了好幾句
+  // 蜜柑回應對話（好幾秒）之後才真正呼叫play()時，已經離手勢太遠而被擋下。
+  // 這裡改成在main.js建立「一支持續存在、每天重複使用」的<video>，並且在
+  // 離seed planting播放最近的一次真實手勢——玩家按下日記「送出」按鈕的
+  // 當下——先play()+pause()解鎖一次（音量暫時歸零，玩家不會聽到聲音），
+  // seedPlantingScene.js之後直接沿用這個已經解鎖過的元素，而不是重新建立
+  const sharedSeedPlantingVideo = document.createElement('video');
+  sharedSeedPlantingVideo.src = 'assets/videos/cine_seed_planting.mp4';
+  sharedSeedPlantingVideo.setAttribute('playsinline', '');
+  sharedSeedPlantingVideo.playsInline = true;
+  window.EF.sharedSeedPlantingVideo = sharedSeedPlantingVideo;
+  window.EF.primeSeedPlantingVideo = function () {
+    const originalVolume = sharedSeedPlantingVideo.volume;
+    sharedSeedPlantingVideo.volume = 0;
+    const p = sharedSeedPlantingVideo.play();
+    if (p && typeof p.catch === 'function') {
+      p.then(function () {
+        sharedSeedPlantingVideo.pause();
+        sharedSeedPlantingVideo.currentTime = 0;
+        sharedSeedPlantingVideo.volume = originalVolume;
+      }).catch(function (err) {
+        // 解鎖失敗不影響任何流程——seedPlantingScene.js真正播放時，
+        // 原本的play().catch()防呆機制還在，播放失敗一樣會視同播完繼續
+        console.warn('[main] seed planting影片解鎖失敗：', err);
+        sharedSeedPlantingVideo.volume = originalVolume;
+      });
+    } else {
+      sharedSeedPlantingVideo.volume = originalVolume;
+    }
+  };
+
   function isFirstEver() {
     return localStorage.getItem(SAVE_KEY) !== 'true';
   }

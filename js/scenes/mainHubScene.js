@@ -2180,6 +2180,9 @@ window.EF.scenes.mainhub = (function () {
       }
 
       function proceedWithSubmitHiding(diaryText) {
+        // 在離seed planting播放最近的這次真實點擊當下先解鎖影片，
+        // 詳見main.js的primeSeedPlantingVideo
+        if (window.EF.primeSeedPlantingVideo) window.EF.primeSeedPlantingVideo();
         diaryOverlay.classList.remove('is-open');
         diaryHotspot.classList.remove('is-available');
         flyLightOrbToDoor();
@@ -2198,6 +2201,9 @@ window.EF.scenes.mainhub = (function () {
           proceedWithSubmitHiding(diaryText);
           return;
         }
+        // 在離seed planting播放最近的這次真實點擊當下先解鎖影片，
+        // 詳見main.js的primeSeedPlantingVideo
+        if (window.EF.primeSeedPlantingVideo) window.EF.primeSeedPlantingVideo();
         diaryOverlay.classList.remove('is-open');
         diaryHotspot.classList.remove('is-available');
         setMikan('listening');

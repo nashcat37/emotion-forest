@@ -33,13 +33,23 @@ window.EF.scenes.seedPlanting = (function () {
     staticBg.className = 'seed-planting__static-bg';
     layer.appendChild(staticBg);
 
-    const video = document.createElement('video');
+    // 優先沿用main.js建立、且已經在「送出日記」按鈕點擊當下解鎖過的共用
+    // <video>元素，而不是每次都document.createElement一個全新的——全新
+    // 元素等於重新歸零iOS的播放授權狀態，會讓main.js那次解鎖白費。
+    // 刻意不重新指定.src（雖然每天都是同一支影片，值不會變，但重新賦值
+    // 在部分瀏覽器上可能被視為重新載入，有機會連帶重置授權狀態，
+    // 乾脆完全不碰）。理論上sharedSeedPlantingVideo一定存在，這裡的
+    // document.createElement只是防呆用的備援寫法
+    const isSharedVideo = !!window.EF.sharedSeedPlantingVideo;
+    const video = window.EF.sharedSeedPlantingVideo || document.createElement('video');
+    if (!isSharedVideo) {
+      video.src = 'assets/videos/cine_seed_planting.mp4';
+      video.setAttribute('playsinline', '');
+      video.playsInline = true;
+    }
     video.className = 'seed-planting__video';
-    video.src = 'assets/videos/cine_seed_planting.mp4';
-    // iOS Safari 對 playsinline 這個屬性，用 setAttribute 直接設在 HTML
-    // 屬性上，會比只設定 JS 的 .playsInline 屬性更可靠
-    video.setAttribute('playsinline', '');
-    video.playsInline = true;
+    video.currentTime = 0;
+    video.volume = 1; // main.js解鎖階段刻意調成0避免解鎖時發出聲音，這裡播放前調回來
     layer.appendChild(video);
 
     container.appendChild(layer);
