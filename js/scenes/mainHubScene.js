@@ -453,7 +453,7 @@ window.EF.scenes.mainhub = (function () {
       '  <rect class="mainhub-scene__memory-spotlight-fill" x="0" y="0" width="1448" height="1086" mask="url(#memorySpotlightMask-' + day + ')"></rect>' +
       '</svg>' +
       '<img class="mainhub-scene__mikan" alt="" />' +
-      '<div class="mainhub-scene__dialogue"><div class="mainhub-scene__dialogue-inner"><span class="mainhub-scene__dialogue-text"></span><span class="mainhub-scene__dialogue-next">▼</span></div></div>' +
+      '<div class="mainhub-scene__dialogue"><div class="mainhub-scene__dialogue-inner"><span class="mainhub-scene__dialogue-text"></span><span class="mainhub-scene__dialogue-next">▼</span></div><div class="mainhub-scene__dialogue-scroll-hint">⌄</div></div>' +
       '<div class="mainhub-scene__farewell-choice">' +
       '  <button class="mainhub-scene__farewell-choice-btn mainhub-scene__farewell-choice-btn--leave">道別</button>' +
       '  <button class="mainhub-scene__farewell-choice-btn mainhub-scene__farewell-choice-btn--stay">再待一會</button>' +
@@ -569,6 +569,7 @@ window.EF.scenes.mainhub = (function () {
     const dialogueEl = container.querySelector('.mainhub-scene__dialogue');
     dialogueEl.classList.add(ritualStep === 'greeting' ? 'is-greeting' : 'is-post-planting');
     const dialogueTextEl = container.querySelector('.mainhub-scene__dialogue-text');
+    const dialogueInnerEl = container.querySelector('.mainhub-scene__dialogue-inner');
     const dialogueNextEl = container.querySelector('.mainhub-scene__dialogue-next');
     const farewellChoice = container.querySelector('.mainhub-scene__farewell-choice');
     const farewellLeaveBtn = container.querySelector('.mainhub-scene__farewell-choice-btn--leave');
@@ -717,16 +718,42 @@ window.EF.scenes.mainhub = (function () {
 
 
     // ---------------- 對話文字（打字機效果） ----------------
+    // 只有is-post-planting階段的對話框有overflow-y:auto（見style.css），
+    // 用來避開回憶影片框、手機直向畫面下長句子可能需要內部捲動才看得完。
+    // 這裡的偵測邏輯放在showDialogue()這個唯一共用入口，不用去每個呼叫點
+    // (打招呼/種下種子後/Day10-18躲藏對話...等十幾處)個別加
+    const SCROLL_HINT_SEEN_KEY = 'ef_seenDialogueScrollHint';
+    function checkDialogueOverflow() {
+      if (!dialogueEl.classList.contains('is-post-planting')) return;
+      // +1避免子像素捲動高度計算的浮點誤差誤判成有溢出
+      const isOverflowing = dialogueInnerEl.scrollHeight > dialogueInnerEl.clientHeight + 1;
+      dialogueInnerEl.classList.toggle('has-overflow', isOverflowing);
+      if (isOverflowing && !localStorage.getItem(SCROLL_HINT_SEEN_KEY)) {
+        localStorage.setItem(SCROLL_HINT_SEEN_KEY, '1');
+        // 這輩子第一次真的遇到需要捲動才看得完的長句，輕輕往下推一點再
+        // 彈回去，暗示「這裡可以滑」，之後不會再重複這個動作
+        dialogueInnerEl.scrollTo({ top: 24, behavior: 'smooth' });
+        const tNudgeBack = setTimeout(function () {
+          dialogueInnerEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 550);
+        cleanupFns.push(function () { clearTimeout(tNudgeBack); });
+      }
+    }
     function showDialogue(text, onComplete2, speedOverride) {
       if (cancelTypewriter) cancelTypewriter();
       dialogueEl.classList.add('is-visible');
       dialogueNextEl.classList.remove('is-visible');
+      // 每次開始講新的一句話，都先歸零捲動位置、清掉上一句殘留的溢出狀態，
+      // 避免新的一句話（就算很短）一開場就因為承接上一句的捲動位置而被擋住
+      dialogueInnerEl.scrollTop = 0;
+      dialogueInnerEl.classList.remove('has-overflow');
       isTyping = true;
       cancelTypewriter = window.EF.typewriter(text, dialogueTextEl, {
         speed: speedOverride || 110,
         onComplete: function () {
           isTyping = false;
           cancelTypewriter = null;
+          checkDialogueOverflow();
           if (onComplete2) onComplete2();
         }
       });
