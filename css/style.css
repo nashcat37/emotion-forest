@@ -642,14 +642,27 @@ textarea, input {
 }
 /* 蜜柑抱著日記本時，桌上不該再有一本，切換成沒有日記本的背景圖版本。
    需要 Nash 額外提供 scene002_mainhub_bg1.png（內容完全相同，只差小圓桌
-   上沒有日記本），放進同一個資料夾就會自動生效，還沒放之前不會有視覺變化。 */
+   上沒有日記本），放進同一個資料夾就會自動生效。
+
+   這裡刻意用逗號疊兩層background-image：排在前面的是「理想版本」
+   (bg1.png)，排在後面的是原本就存在的預設背景圖當作fallback——如果
+   bg1.png還沒放進資料夾（或路徑打錯），瀏覽器讀取那一層失敗時會自動
+   接著顯示後面這層，不會整個變黑。原本只寫一層background-image，
+   圖片404時畫面就會直接見底看到body的黑色背景，這是已知會發生過的
+   真實bug，不是理論上的假設 */
 .mainhub-scene__bg.is-diary-hidden {
-  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg1.png');
+  background-image:
+    url('../assets/images/scene002_mainhub/scene002_mainhub_bg1.png'),
+    url('../assets/images/scene002_mainhub/scene002_mainhub_bg.png');
 }
 /* Day10-18限定：蜜柑躲在小屋裡，搖椅空著，窗戶透出若隱若現的身影，
-   桌上維持有日記本的版本（這段期間日記照常使用，不是is-diary-hidden那組） */
+   桌上維持有日記本的版本（這段期間日記照常使用，不是is-diary-hidden那組）。
+   同上，疊一層原本的預設背景圖當fallback，避免素材檔案還沒到位時
+   畫面整個變黑 */
 .mainhub-scene__bg.is-hiding {
-  background-image: url('../assets/images/scene002_mainhub/scene002_mainhub_bg_hiding.png');
+  background-image:
+    url('../assets/images/scene002_mainhub/scene002_mainhub_bg_hiding.png'),
+    url('../assets/images/scene002_mainhub/scene002_mainhub_bg.png');
 }
 
 /* Day10限定：點日記本熱區第一次看到的畫面，紙條圖當作背景插圖，
