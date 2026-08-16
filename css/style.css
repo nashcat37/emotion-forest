@@ -1794,6 +1794,10 @@ textarea, input {
   padding: 6% 6% 4%;
   box-sizing: border-box;
   overflow-y: auto;
+  /* iOS Safari對巢狀（外層本身也是疊層）的捲動區塊，沒有這個屬性的話
+     滑鼠/桌面版正常，但手指觸控滑動完全沒反應——這是iOS特有的已知
+     行為，不是邏輯錯誤，Android/桌面版不需要這行也能正常捲動 */
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none; /* Firefox：隱藏捲軸但保留捲動功能 */
   -ms-overflow-style: none; /* 舊版 Edge / IE */
 }
