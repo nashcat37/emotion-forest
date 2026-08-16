@@ -50,6 +50,7 @@ window.EF.scenes.seedPlanting = (function () {
     video.className = 'seed-planting__video';
     video.currentTime = 0;
     video.volume = 1; // main.js解鎖階段刻意調成0避免解鎖時發出聲音，這裡播放前調回來
+    video.muted = false; // 同上，解鎖階段用muted=true避免搶走音訊主導權，這裡播放前要恢復有聲
     layer.appendChild(video);
 
     container.appendChild(layer);

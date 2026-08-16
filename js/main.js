@@ -353,6 +353,23 @@ document.addEventListener('DOMContentLoaded', function () {
         fadeTo(nightAmbience, 0);
         fadeTo(softWind, 0);
         fadeTo(backgroundMusic, 0);
+      },
+
+      // 只重新解鎖background.mp3，不要動nightAmbience/softWind——這兩軌
+      // 在呼叫這個函式的時間點（例如日記送出時）通常已經在播放中，如果
+      // 對它們重複play()+pause()，會誤把正在播放的環境音打斷、歸零
+      primeBackgroundMusic: function () {
+        if (backgroundMusic.paused) {
+          const p = backgroundMusic.play();
+          if (p && typeof p.catch === 'function') {
+            p.then(function () {
+              backgroundMusic.pause();
+              backgroundMusic.currentTime = 0;
+            }).catch(function (err) {
+              console.warn('[AudioManager] background.mp3 重新解鎖失敗：', err);
+            });
+          }
+        }
       }
     };
   })();
@@ -374,22 +391,25 @@ document.addEventListener('DOMContentLoaded', function () {
   sharedSeedPlantingVideo.playsInline = true;
   window.EF.sharedSeedPlantingVideo = sharedSeedPlantingVideo;
   window.EF.primeSeedPlantingVideo = function () {
-    const originalVolume = sharedSeedPlantingVideo.volume;
-    sharedSeedPlantingVideo.volume = 0;
+    // 用muted而不是volume=0：iOS對「有聲影片」跟「靜音影片」的音訊主導權
+    // 處理方式不同，就算音量是0，只要影片本身「有聲音」，播放它仍有可能
+    // 讓iOS認為換了一個新的播放主體，進而打斷/重置night-ambience等其他
+    // 音軌原本的播放授權狀態；muted=true則不會搶走音訊主導權，更安全
+    sharedSeedPlantingVideo.muted = true;
     const p = sharedSeedPlantingVideo.play();
     if (p && typeof p.catch === 'function') {
       p.then(function () {
         sharedSeedPlantingVideo.pause();
         sharedSeedPlantingVideo.currentTime = 0;
-        sharedSeedPlantingVideo.volume = originalVolume;
+        sharedSeedPlantingVideo.muted = false; // 真正播放前要恢復有聲
       }).catch(function (err) {
         // 解鎖失敗不影響任何流程——seedPlantingScene.js真正播放時，
         // 原本的play().catch()防呆機制還在，播放失敗一樣會視同播完繼續
         console.warn('[main] seed planting影片解鎖失敗：', err);
-        sharedSeedPlantingVideo.volume = originalVolume;
+        sharedSeedPlantingVideo.muted = false;
       });
     } else {
-      sharedSeedPlantingVideo.volume = originalVolume;
+      sharedSeedPlantingVideo.muted = false;
     }
   };
 

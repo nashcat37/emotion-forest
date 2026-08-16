@@ -2065,6 +2065,14 @@ window.EF.scenes.mainhub = (function () {
           if (isTyping) return;
           if (idx < lines.length - 1) {
             idx++;
+            if (idx === lines.length - 1) {
+              // 點擊進入最後一句話的這個瞬間，是這整段對話流程裡最後
+              // 一次確定會發生的玩家手勢——原本background.mp3的切換是放在
+              // playHidingArcMemory()開頭，但那裡要等這句話停留1.5秒、
+              // 淡出1.2秒後才會真正執行到，離手勢已經隔了將近3秒，容易被
+              // iOS的自動播放政策擋下。這裡提前到點擊當下觸發，貼近手勢
+              if (window.EF.AudioManager) window.EF.AudioManager.switchToBackgroundMusic();
+            }
             playLine(idx);
           }
         }
@@ -2093,9 +2101,9 @@ window.EF.scenes.mainhub = (function () {
       }
 
       function playHidingArcMemory(onDone) {
-        // 進入全黑的這一刻切background.mp3，一路播到玩家真正按下道別
-        // （stopBackgroundMusic已經綁在main.js的farewell分支，不用在這裡處理停止）
-        if (window.EF.AudioManager) window.EF.AudioManager.switchToBackgroundMusic();
+        // background.mp3的切換已經搬到playHidingArcOS()「點擊進入最後
+        // 一句話」的那個瞬間觸發（更貼近玩家手勢，詳見該處註解），這裡
+        // 不用再呼叫一次switchToBackgroundMusic()
         // 蜜柑先淡入——只有她本人，不開任何聚光燈的洞，所以搖椅本身不會
         // 被揭露（背後其實是bg_hiding.png的空搖椅，但因為沒開洞，只有
         // 蜜柑的sprite浮在全黑中，符合「不需要搖椅」的要求）。位置沿用
@@ -2183,6 +2191,12 @@ window.EF.scenes.mainhub = (function () {
         // 在離seed planting播放最近的這次真實點擊當下先解鎖影片，
         // 詳見main.js的primeSeedPlantingVideo
         if (window.EF.primeSeedPlantingVideo) window.EF.primeSeedPlantingVideo();
+        // 同時也在這個時間點重新解鎖一次background.mp3：它原本只在
+        // 整個流程最開頭「進入森林」那次點擊解鎖過，這裡離之後真正切到
+        // background.mp3的時間點更近，重新解鎖一次更保險。用專屬的
+        // primeBackgroundMusic而不是重跑整組unlockAll，避免影響到這時候
+        // 已經在播放中的night-ambience
+        if (window.EF.AudioManager && window.EF.AudioManager.primeBackgroundMusic) window.EF.AudioManager.primeBackgroundMusic();
         diaryOverlay.classList.remove('is-open');
         diaryHotspot.classList.remove('is-available');
         flyLightOrbToDoor();
@@ -2204,6 +2218,12 @@ window.EF.scenes.mainhub = (function () {
         // 在離seed planting播放最近的這次真實點擊當下先解鎖影片，
         // 詳見main.js的primeSeedPlantingVideo
         if (window.EF.primeSeedPlantingVideo) window.EF.primeSeedPlantingVideo();
+        // 同時也在這個時間點重新解鎖一次background.mp3：它原本只在
+        // 整個流程最開頭「進入森林」那次點擊解鎖過，這裡離之後真正切到
+        // background.mp3的時間點更近，重新解鎖一次更保險。用專屬的
+        // primeBackgroundMusic而不是重跑整組unlockAll，避免影響到這時候
+        // 已經在播放中的night-ambience
+        if (window.EF.AudioManager && window.EF.AudioManager.primeBackgroundMusic) window.EF.AudioManager.primeBackgroundMusic();
         diaryOverlay.classList.remove('is-open');
         diaryHotspot.classList.remove('is-available');
         setMikan('listening');
@@ -2422,7 +2442,29 @@ window.EF.scenes.mainhub = (function () {
       const imgDayStr = imgDay < 10 ? '0' + imgDay : String(imgDay);
       let index = 0;
 
-      const t1 = setTimeout(function () {
+      // 抓「今天種出的植物」名稱，用在下面的揭曉對話裡。花園清單裡每筆
+      // 都有day欄位，跟todaysPlantSlot判斷「今天的植物」用的是同一個
+      // 比對方式（entry.day === day），這裡直接沿用
+      const gardenLayoutForReveal = window.EF.GardenManager.getGardenLayout();
+      const todaysGardenEntry = gardenLayoutForReveal.find(function (e) { return e.day === day; });
+      const todaysPlantNameZh = todaysGardenEntry ? (PLANT_INFO[todaysGardenEntry.plantType] || {}).nameZh : '';
+      const plantRevealText = todaysPlantNameZh
+        ? '喵~情緒植物「' + todaysPlantNameZh + '」被你喚醒囉~'
+        : '喵~又有一株新的情緒植物冒出來了~'; // 抓不到名稱時的保底文案，理論上不會用到
+
+      // 這句「植物揭曉」對話，除了本身是有意義的敘事內容（讓玩家知道今天
+      // 種出了什麼），也順便解決了iOS自動播放政策的問題：background.mp3
+      // 的切換原本是1.5秒後自動觸發，全程沒有任何點擊，離「送出日記」那次
+      // 手勢太遠，容易被iOS擋下。現在改成玩家點擊這句話之後才觸發，
+      // 是一個新鮮的手勢，不需要額外加突兀的「請點擊繼續」按鈕
+      const tReveal = setTimeout(function () {
+        showDialogue(plantRevealText, function () {
+          dialogueNextEl.classList.add('is-visible');
+        });
+      }, 1500);
+      cleanupFns.push(function () { clearTimeout(tReveal); });
+
+      function enterMemoryGlow() {
         setMikan('memory');
         // 魔法的高點：情緒變成植物、蜜柑想起回憶的魔幻時刻，切到拉高情緒的陪伴音樂
         if (window.EF.AudioManager) window.EF.AudioManager.switchToBackgroundMusic();
@@ -2436,9 +2478,22 @@ window.EF.scenes.mainhub = (function () {
         // 這樣你可以陸續把部分天數換成 mp4，不用一次全部轉換，也不用改程式碼
         setMp4WithPngFallback(memoryVideo, memoryImg, 'assets/images/memories/memory_day' + imgDayStr);
         memoryFrame.classList.add('is-visible');
+        dialogueEl.addEventListener('click', onDialogueClick);
+        cleanupFns.push(function () { dialogueEl.removeEventListener('click', onDialogueClick); });
         playFragment(index);
-      }, 1500);
-      cleanupFns.push(function () { clearTimeout(t1); });
+      }
+
+      function onRevealClick() {
+        if (isTyping) return; // 逐字輸出中不回應點擊，避免搶話
+        dialogueEl.removeEventListener('click', onRevealClick);
+        hideDialogue();
+        const tRevealFade = setTimeout(function () {
+          enterMemoryGlow();
+        }, 600); // 等對話框淡出動畫跑完，再切進回憶模式，畫面銜接不會太突兀
+        cleanupFns.push(function () { clearTimeout(tRevealFade); });
+      }
+      dialogueEl.addEventListener('click', onRevealClick);
+      cleanupFns.push(function () { dialogueEl.removeEventListener('click', onRevealClick); });
 
       // 回憶對話的逐字速度比一般對話慢約1/3（110→147），讓回憶片段讀起來
       // 更有分量、更慢，跟其他情境（開場白、深呼吸引導等）的節奏做出區隔
@@ -2481,8 +2536,6 @@ window.EF.scenes.mainhub = (function () {
           cleanupFns.push(function () { clearTimeout(tStayPause); });
         }
       }
-      dialogueEl.addEventListener('click', onDialogueClick);
-      cleanupFns.push(function () { dialogueEl.removeEventListener('click', onDialogueClick); });
 
       const stayLines = day === 1 ? COPY.stayLinesFirstTime : (day % 2 === 0 ? COPY.stayLinesEven : COPY.stayLinesOdd);
       let stayIndex = 0;
