@@ -41,6 +41,13 @@
          不會出現點了沒反應的按鈕）。只放在啟動門檻，進入森林後不再出現，
          避免干擾Ritual的沉浸感 -->
     <button class="start-gate__fullscreen-btn" id="fullscreenBtn" style="display:none;">⛶ 全螢幕</button>
+    <!-- iOS加入主畫面提示：預設隱藏，只有main.js偵測到「iOS裝置」+
+         「不是從主畫面圖示啟動」+「看起來是用Safari開的」才會顯示。
+         iOS沒有API可以主動跳出加入主畫面的提示視窗，只能用文字引導 -->
+    <div class="ios-install-hint" id="iosInstallHint" style="display:none;">
+      <div class="ios-install-hint__text">在 iPhone / iPad 上遊玩，建議用 Safari 操作，同時點下方的「分享」鍵 <span class="ios-install-hint__icon">📤</span>，選擇「加入主畫面」，體驗會更完整、更沉浸。</div>
+      <button class="ios-install-hint__dismiss" id="iosInstallHintDismiss">知道了</button>
+    </div>
     <!-- 遊玩回饋入口之一：不分正式Ritual／瀏覽模式，只要玩家看得到
          start-gate（第一次開啟、或瀏覽模式離開後回到這裡）就能給意見。
          跟end-gate的同名按鈕共用同一個feedback-overlay面板，見main.js -->

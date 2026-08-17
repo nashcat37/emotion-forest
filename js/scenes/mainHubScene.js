@@ -365,6 +365,9 @@ window.EF.scenes.mainhub = (function () {
   let cleanupFns = [];
   let cancelTypewriter = null;
   let isTyping = false;
+  // 供completeTypewriterNow()（點擊跳過打字用）讀取，見showDialogue()內的說明
+  let currentDialogueText = '';
+  let currentOnComplete2 = null;
 
   function mount(container, params, onComplete) {
     cleanupFns = [];
@@ -686,7 +689,7 @@ window.EF.scenes.mainhub = (function () {
       const lines = item.lines;
       let idx = 0;
       function onLineClick() {
-        if (isTyping) return;
+        if (isTyping) { completeTypewriterNow(); return; }
         if (idx < lines.length - 1) {
           idx++;
           playLine(idx);
@@ -749,6 +752,11 @@ window.EF.scenes.mainhub = (function () {
       dialogueInnerEl.scrollTop = 0;
       dialogueInnerEl.classList.remove('has-overflow');
       isTyping = true;
+      // 供completeTypewriterNow()在玩家點擊跳過打字時使用：typewriter.js
+      // 的cancel()只會停掉計時器，不會補完文字也不會觸發onComplete，
+      // 這兩個要留著給跳過路徑自己手動處理
+      currentDialogueText = text;
+      currentOnComplete2 = onComplete2;
       cancelTypewriter = window.EF.typewriter(text, dialogueTextEl, {
         speed: speedOverride || 110,
         onComplete: function () {
@@ -758,6 +766,28 @@ window.EF.scenes.mainhub = (function () {
           if (onComplete2) onComplete2();
         }
       });
+    }
+
+    // 玩家在打字動畫還沒跑完時點擊，讓這句話瞬間顯示完整，而不是像原本
+    // 一樣完全沒反應。只把「這次點擊」吃掉當作「跳過打字」，不會連著
+    // 觸發「推進到下一句／後續動作」——呼叫端(12處各自的點擊監聽器)在
+    // isTyping為true時呼叫完這個函式後仍會接著return，確保「跳過」跟
+    // 「推進」不會發生在同一次點擊裡，這對綁在對話點擊上的音樂/影片
+    // 觸發時機（Day1-9植物揭曉、Day10-18窗邊對話最後一句）很重要，
+    // 不會被提前或重複觸發。
+    // 把原本typewriter「自然打完」時會做的三件事（補滿文字、檢查捲動
+    // 提示、觸發後續callback）在這裡完整重做一次，確保「玩家看完整個
+    // 打字動畫」跟「玩家點擊跳過」兩種情況，最終畫面結果完全一樣
+    function completeTypewriterNow() {
+      if (!isTyping) return;
+      if (cancelTypewriter) {
+        cancelTypewriter();
+        cancelTypewriter = null;
+      }
+      dialogueTextEl.innerText = currentDialogueText;
+      isTyping = false;
+      checkDialogueOverflow();
+      if (currentOnComplete2) currentOnComplete2();
     }
 
     function hideDialogue() {
@@ -826,7 +856,7 @@ window.EF.scenes.mainhub = (function () {
       let gifPlaying = false;
 
       function onMikanPat() {
-        if (isTyping) return;
+        if (isTyping) { completeTypewriterNow(); return; }
         if (gifPlaying) return; // 播放中不重複觸發，避免疊加計時器造成提前或延後恢復
         if (mikanIsAway) return; // 蜜柑還在花園/湖邊/門口，人不在椅子這裡不該有反應
         // 不打斷正式 Ritual 對話，只在蜜柑「安靜待著」時才有反應
@@ -868,7 +898,7 @@ window.EF.scenes.mainhub = (function () {
       // 播完後恢復原本畫面上顯示的對話內容（如果原本有的話）
       let doorPlaying = false;
       function onDoorClick() {
-        if (isTyping) return;
+        if (isTyping) { completeTypewriterNow(); return; }
         if (doorPlaying) return;
         const original = dialogueTextEl.innerText;
         const wasVisible = dialogueEl.classList.contains('is-visible');
@@ -1697,7 +1727,7 @@ window.EF.scenes.mainhub = (function () {
           const lines = COPY.day10NoteLines;
           let noteIndex = 0;
           function onNoteLineClick() {
-            if (isTyping) return;
+            if (isTyping) { completeTypewriterNow(); return; }
             if (noteIndex < lines.length - 1) {
               noteIndex++;
               playNoteLine(noteIndex);
@@ -1815,7 +1845,7 @@ window.EF.scenes.mainhub = (function () {
         }
 
         function onGreetingDialogueClick() {
-          if (isTyping) return;
+          if (isTyping) { completeTypewriterNow(); return; }
           if (greetIndex < greetingLines.length - 1) {
             greetIndex++;
             playGreetingLine(greetIndex);
@@ -1869,7 +1899,7 @@ window.EF.scenes.mainhub = (function () {
           }
 
           function onIntroClick() {
-            if (isTyping) return;
+            if (isTyping) { completeTypewriterNow(); return; }
             if (introIndex < lines.length - 1) {
               introIndex++;
               playIntroLine(introIndex);
@@ -2062,7 +2092,7 @@ window.EF.scenes.mainhub = (function () {
         dialogueEl.classList.add('is-hiding-os');
         let idx = 0;
         function onLineClick() {
-          if (isTyping) return;
+          if (isTyping) { completeTypewriterNow(); return; }
           if (idx < lines.length - 1) {
             idx++;
             if (idx === lines.length - 1) {
@@ -2153,7 +2183,7 @@ window.EF.scenes.mainhub = (function () {
               }, MEMORY_TYPEWRITER_SPEED);
             }
             function onLineClick() {
-              if (isTyping) return;
+              if (isTyping) { completeTypewriterNow(); return; }
               if (idx < fragments.length - 1) {
                 idx++;
                 playLine(idx);
@@ -2333,7 +2363,7 @@ window.EF.scenes.mainhub = (function () {
         dialogueEl.classList.add('is-hiding-os');
         let idx = 0;
         function onLineClick() {
-          if (isTyping) return;
+          if (isTyping) { completeTypewriterNow(); return; }
           if (idx < lines.length - 1) {
             idx++;
             playLine(idx);
@@ -2484,7 +2514,7 @@ window.EF.scenes.mainhub = (function () {
       }
 
       function onRevealClick() {
-        if (isTyping) return; // 逐字輸出中不回應點擊，避免搶話
+        if (isTyping) { completeTypewriterNow(); return; } // 逐字輸出中不回應點擊，避免搶話
         dialogueEl.removeEventListener('click', onRevealClick);
         hideDialogue();
         const tRevealFade = setTimeout(function () {
@@ -2505,7 +2535,7 @@ window.EF.scenes.mainhub = (function () {
       }
 
       function onDialogueClick() {
-        if (isTyping) return; // 逐字輸出中不回應點擊，避免搶話
+        if (isTyping) { completeTypewriterNow(); return; } // 逐字輸出中不回應點擊，避免搶話
         if (index < fragments.length - 1) {
           index++;
           playFragment(index);
@@ -2581,7 +2611,7 @@ window.EF.scenes.mainhub = (function () {
       }
 
       function onStayLineClick() {
-        if (isTyping) return;
+        if (isTyping) { completeTypewriterNow(); return; }
         if (stayIndex < stayLines.length - 1) {
           stayIndex++;
           playStayLine(stayIndex);
@@ -2607,7 +2637,7 @@ window.EF.scenes.mainhub = (function () {
         const lines = COPY.farewellDay1;
         let idx = 0;
         function onLineClick() {
-          if (isTyping) return;
+          if (isTyping) { completeTypewriterNow(); return; }
           if (idx < lines.length - 1) {
             idx++;
             playLine(idx);

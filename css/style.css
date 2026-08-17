@@ -157,6 +157,45 @@ textarea, input {
   border-color: rgba(255, 245, 225, 0.45);
   color: rgba(255, 245, 225, 0.8);
 }
+/* iOS加入主畫面提示：跟遊玩回饋按鈕一樣，這是給玩家的實用資訊，
+   不是世界觀的一部分，故意用比較平實、說明性的樣式呈現，不用蜜柑的
+   語氣包裝。做成小卡片而不是純文字連結，因為文字內容比較長，需要
+   稍微跟背景區隔出來才容易閱讀 */
+.ios-install-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(86vw, 380px);
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 245, 225, 0.2);
+  border-radius: 12px;
+}
+.ios-install-hint__text {
+  color: rgba(255, 245, 225, 0.75);
+  font-size: clamp(0.7rem, 1.7vmin, 0.9rem);
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+.ios-install-hint__icon {
+  display: inline-block;
+}
+.ios-install-hint__dismiss {
+  padding: 5px 20px;
+  background: none;
+  border: 1px solid rgba(255, 245, 225, 0.3);
+  border-radius: 999px;
+  color: rgba(255, 245, 225, 0.65);
+  font-size: clamp(0.68rem, 1.6vmin, 0.85rem);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.ios-install-hint__dismiss:hover {
+  border-color: rgba(255, 245, 225, 0.5);
+  color: rgba(255, 245, 225, 0.9);
+}
 .start-gate__hint {
   position: absolute;
   bottom: calc(50% + 60px);
@@ -830,13 +869,21 @@ textarea, input {
 }
 .mainhub-scene__dialogue-next {
   display: block;
-  margin-top: 6px;
+  overflow: hidden;
+  max-height: 0;
+  margin-top: 0;
   font-size: clamp(1.0rem, 2.55vmin, 1.5rem); /* 原 0.85rem，放大 1.5 倍，現改為隨畫布縮放 */
   opacity: 0;
-  transition: opacity 0.8s ease;
+  /* 用max-height取代純opacity切換：不顯示時max-height:0，完全不佔對話框
+     的版面高度；顯示時平滑展開，效果像箭頭隨文字打完「長出來」，而不是
+     一直預留一整行空間、只是顏色深淺切換。這對「框會跟著內容長高」的
+     post-planting對話框特別重要，避免打字途中框比實際文字內容多出一截 */
+  transition: opacity 0.8s ease, max-height 0.3s ease, margin-top 0.3s ease;
   animation: dialogueNextBounce 1.6s ease-in-out infinite;
 }
 .mainhub-scene__dialogue-next.is-visible {
+  max-height: 2em;
+  margin-top: 6px;
   opacity: 0.7;
 }
 /* post_planting階段的對話框限制最大高度，超過父容器(45%~65%的區域)就內部

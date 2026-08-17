@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 開發測試面板開關：true時面板會顯示、所有測試按鈕正常運作；
   // 正式上線前把這裡改成false，面板連同所有測試按鈕的事件綁定都會
   // 整個跳過，不用手動刪除任何程式碼或HTML
-  const IS_DEV_BUILD = false;
+  const IS_DEV_BUILD = false ;
 
   // ---------------- 防止一般玩家右鍵拷貝／查看原始碼 ----------------
   // 注意：這只能防住普通玩家的右鍵選單跟常見快捷鍵，屬於基本嚇阻，
@@ -174,6 +174,47 @@ document.addEventListener('DOMContentLoaded', function () {
       document.addEventListener('webkitfullscreenchange', updateFullscreenBtnLabel);
       document.addEventListener('msfullscreenchange', updateFullscreenBtnLabel);
     }
+  }
+
+  // ---------------- iOS 加入主畫面提示 ----------------
+  // iOS沒有任何JS API可以主動跳出「加入主畫面」的提示視窗（不像Android
+  // Chrome有beforeinstallprompt這種機制），只能用文字說明引導玩家自己
+  // 到Safari的分享選單裡操作。同時顯示需要符合三個條件：是iOS裝置、
+  // 還沒有加入主畫面、看起來是用Safari開的（排除iOS上的Chrome/LINE/
+  // Instagram等內建瀏覽器，這些瀏覽器的加入主畫面行為不同或不支援，
+  // 提示了也沒用）
+  const IOS_INSTALL_HINT_SEEN_KEY = 'ef_seenIOSInstallHint';
+  function isIOSDevice() {
+    const ua = navigator.userAgent;
+    // 傳統iPhone/iPad UA判斷，另外處理iPadOS 13+偽裝成Mac UA、
+    // 但實際支援多點觸控的情況（navigator.maxTouchPoints > 1可判斷）
+    const isClassicIOSUA = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isIPadOS13Plus = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    return isClassicIOSUA || isIPadOS13Plus;
+  }
+  function isStandaloneMode() {
+    // navigator.standalone是iOS Safari專屬屬性，true代表目前是從
+    // 主畫面圖示啟動的，不是從瀏覽器分頁打開的
+    return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  }
+  function isLikelySafari() {
+    const ua = navigator.userAgent;
+    // CriOS=iOS版Chrome、FxiOS=iOS版Firefox、EdgiOS=iOS版Edge、
+    // OPiOS=iOS版Opera、Line/FBAN/FBAV/Instagram=App內建瀏覽器
+    const isExcluded = /CriOS|FxiOS|EdgiOS|OPiOS|Line\/|FBAN|FBAV|Instagram/i.test(ua);
+    return !isExcluded;
+  }
+  const iosInstallHint = document.getElementById('iosInstallHint');
+  const iosInstallHintDismiss = document.getElementById('iosInstallHintDismiss');
+  if (iosInstallHint && !localStorage.getItem(IOS_INSTALL_HINT_SEEN_KEY)
+      && isIOSDevice() && !isStandaloneMode() && isLikelySafari()) {
+    iosInstallHint.style.display = '';
+  }
+  if (iosInstallHintDismiss) {
+    iosInstallHintDismiss.addEventListener('click', function () {
+      localStorage.setItem(IOS_INSTALL_HINT_SEEN_KEY, '1');
+      iosInstallHint.style.display = 'none';
+    });
   }
 
   // 下雪效果測試按鈕：觸發時機還沒定案前，先手動預覽。只有目前在
