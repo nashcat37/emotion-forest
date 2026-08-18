@@ -873,6 +873,7 @@ textarea, input {
   max-height: 0;
   margin-top: 0;
   font-size: clamp(1.0rem, 2.55vmin, 1.5rem); /* 原 0.85rem，放大 1.5 倍，現改為隨畫布縮放 */
+  line-height: 1.2; /* 不繼承父層(.dialogue-inner)的1.8，避免跟下面max-height算出來的空間打架、裁切到箭頭字元 */
   opacity: 0;
   /* 用max-height取代純opacity切換：不顯示時max-height:0，完全不佔對話框
      的版面高度；顯示時平滑展開，效果像箭頭隨文字打完「長出來」，而不是
@@ -882,7 +883,7 @@ textarea, input {
   animation: dialogueNextBounce 1.6s ease-in-out infinite;
 }
 .mainhub-scene__dialogue-next.is-visible {
-  max-height: 2em;
+  max-height: 2.6em; /* 比line-height(1.2em)留更多餘裕，避免子像素誤差裁切到箭頭 */
   margin-top: 6px;
   opacity: 0.7;
 }

@@ -2572,12 +2572,13 @@ window.EF.scenes.mainhub = (function () {
 
       function playStayLine(i) {
         const isLast = i === stayLines.length - 1;
-        if (isLast) {
-          // 最後一句不需要玩家再點一次才淡出，讀完自動接續，取消點擊監聽
-          dialogueEl.removeEventListener('click', onStayLineClick);
-        }
         showDialogue(stayLines[i], function () {
           if (isLast) {
+            // 這句話打完字之後，才移除點擊監聽——之前如果在打字過程中
+            // 移除，會導致玩家點擊沒辦法跳過打字（因為監聽器早就沒了）。
+            // 現在改成打完字才移除，維持「打字中可以點擊跳過」的一致性，
+            // 同時確保打完字之後、自動淡出前的這段停留，點擊不會有反應
+            dialogueEl.removeEventListener('click', onStayLineClick);
             const tRead = setTimeout(function () {
               hideDialogue();
               // 音樂維持 background 播放，不在這裡切回 night-ambience：
